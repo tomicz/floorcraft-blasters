@@ -6,6 +6,7 @@ using Matterless.Localisation;
 using UnityEngine.XR.ARFoundation;
 using Matterless.Module.UI;
 using Matterless.Module.RemoteConfigs;
+using Reown.AppKit.Unity;
 
 namespace Matterless.Floorcraft
 {
@@ -22,6 +23,9 @@ namespace Matterless.Floorcraft
         [SerializeField] bool m_UseAukiWrapperMock = false;
         [SerializeField] ARSessionOrigin m_arSessionOrigin;
         [SerializeField] ARSession m_arSession;
+
+        [Header("Reown")]
+        [SerializeField] private AppKitCore m_AppKitCore;
 
         private void SetupRendering(RenderingSettings settings)
         {
@@ -69,6 +73,8 @@ namespace Matterless.Floorcraft
             container.Bind<SplashScreenService>(m_AppConfigs.splashScreenSettings, m_EnvironmentSettings.version);
             container.Bind<Bootstrap>(m_AppContext, m_UiContext, m_DebugContext, m_AppConfigs);
             container.Bind<INetworkService, NetworkService>();
+
+            container.Bind<WalletService>(m_AppKitCore, m_AppConfigs.walletSettings);
         }
     }
 }

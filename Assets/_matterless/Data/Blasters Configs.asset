@@ -44,6 +44,12 @@ MonoBehaviour:
     m_EnvironmentDepthMode: 0
     m_UseThisSessionIdInEditor: 0
     m_SessionId: 
+  m_WalletSettings:
+    m_ProjectId: Reown project id
+    m_ProjectName: Your project name
+    m_ProjectDescription: Your project description
+    m_ProjectUrl: Your project url
+    m_ProjectIconUrl: Your project icon
   m_RaycastSettings:
     m_TrackableType: 1
   m_ConnectionIndicationSettings:
