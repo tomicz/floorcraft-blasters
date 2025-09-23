@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.amplitude.unityplugin": "https://github.com/amplitude/unity-plugin.git?path=/Assets",
-    "com.aukilabs.unity.conjurekit": "0.6.89",
+    "com.aukilabs.unity.conjurekit": "0.6.91",
     "com.aukilabs.unity.grund": "0.6.11",
     "com.aukilabs.unity.manna": "0.6.98",
     "com.aukilabs.unity.vikja": "0.5.3",
@@ -9,6 +9,7 @@
     "com.matterless.module.audio": "git@github.com:matterless/audio-module.git",
     "com.matterless.module.inject": "git@github.com:matterless/inject-module.git",
     "com.matterless.module.localisation": "git@github.com:matterless/localisation-module.git",
+    "com.reown.appkit.unity": "1.5.0",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.feature.development": "1.0.1",
     "com.unity.ide.rider": "3.0.26",
@@ -25,7 +26,7 @@
     "com.unity.xr.arcore": "4.2.9",
     "com.unity.xr.arfoundation": "4.2.9",
     "com.unity.xr.arkit": "4.2.9",
-    "io.backtrace.unity": "3.7.8-preview.2",
+    "io.backtrace.unity": "3.13.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
@@ -70,6 +71,18 @@
       "name": "package.openupm.com",
       "url": "https://package.openupm.com",
       "scopes": [
+        "com.nethereum.unity",
+        "com.reown.appkit.unity",
+        "com.reown.core",
+        "com.reown.core.common",
+        "com.reown.core.crypto",
+        "com.reown.core.network",
+        "com.reown.core.storage",
+        "com.reown.sign",
+        "com.reown.sign.nethereum",
+        "com.reown.sign.nethereum.unity",
+        "com.reown.sign.unity",
+        "com.reown.unity.dependencies",
         "io.backtrace.unity"
       ]
     }
