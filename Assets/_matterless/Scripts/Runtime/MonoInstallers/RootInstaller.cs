@@ -24,9 +24,6 @@ namespace Matterless.Floorcraft
         [SerializeField] ARSessionOrigin m_arSessionOrigin;
         [SerializeField] ARSession m_arSession;
 
-        [Header("Reown")]
-        [SerializeField] private AppKitCore m_AppKitCore;
-
         private void SetupRendering(RenderingSettings settings)
         {
             Application.targetFrameRate = settings.targetFrameRate;
@@ -74,7 +71,7 @@ namespace Matterless.Floorcraft
             container.Bind<Bootstrap>(m_AppContext, m_UiContext, m_DebugContext, m_AppConfigs);
             container.Bind<INetworkService, NetworkService>();
 
-            container.Bind<WalletService>(m_AppKitCore, m_AppConfigs.walletSettings);
+            container.Bind<WalletService>(m_AppConfigs.walletSettings);
         }
     }
 }

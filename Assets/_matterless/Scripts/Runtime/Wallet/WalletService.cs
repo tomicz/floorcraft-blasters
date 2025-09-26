@@ -8,7 +8,6 @@ namespace Matterless.Floorcraft
 {
     public class WalletService
     {
-        private readonly AppKitCore m_AppKitCore;
         private readonly WalletSettings m_WalletSettings;
         private bool m_IsInitialized = false;
 
@@ -16,17 +15,13 @@ namespace Matterless.Floorcraft
         public event Action onWalletConnected;
         public event Action onWalletDisconnected;
 
-        public WalletService(AppKitCore appKitCore, WalletSettings walletSettings)
+        public WalletService(WalletSettings walletSettings)
         {
-            m_AppKitCore = appKitCore;
             m_WalletSettings = walletSettings;
-            // REMOVED: InitializeWallet(); - Don't initialize on startup
         }
 
-        // Add public methods for UI to call
         public async void ConnectWallet()
         {
-            // Initialize wallet only when connect button is clicked
             if (!m_IsInitialized)
             {
                 await InitializeWallet();
@@ -39,7 +34,6 @@ namespace Matterless.Floorcraft
 
         public void DisconnectWallet()
         {
-            // Implement disconnect logic
             onWalletDisconnected?.Invoke();
         }
 
@@ -60,7 +54,6 @@ namespace Matterless.Floorcraft
                 await AppKit.InitializeAsync(config);
                 m_IsInitialized = true;
                 
-                // After initialization, try to resume session or open modal
                 await ResumeSession();
             }
             catch (Exception ex)
@@ -84,7 +77,6 @@ namespace Matterless.Floorcraft
             }
         }
 
-        // CORRECT WAY: Get wallet address from connected accounts
         public string GetWalletAddress()
         {
             try
@@ -104,7 +96,6 @@ namespace Matterless.Floorcraft
             }
         }
 
-        // CORRECT WAY: Get wallet balance (this requires additional implementation)
         public async Task<string> GetWalletBalanceAsync()
         {
             try
@@ -115,9 +106,6 @@ namespace Matterless.Floorcraft
                     return "0";
                 }
 
-                // You would need to implement actual balance fetching here
-                // This could involve calling a blockchain API or using a service like Alchemy, Infura, etc.
-                // For now, returning a placeholder
                 return "0.0";
             }
             catch (Exception ex)
@@ -127,7 +115,6 @@ namespace Matterless.Floorcraft
             }
         }
 
-        // ADD THIS METHOD: Synchronous version for immediate use in UI
         public string GetWalletBalance()
         {
             try
@@ -138,7 +125,6 @@ namespace Matterless.Floorcraft
                     return "0";
                 }
 
-                // Return placeholder for now - you can implement actual balance fetching
                 return "0.0";
             }
             catch (Exception ex)
@@ -148,7 +134,6 @@ namespace Matterless.Floorcraft
             }
         }
 
-        // Alternative: Get all connected accounts
         public string[] GetAllWalletAddresses()
         {
             try
@@ -167,7 +152,6 @@ namespace Matterless.Floorcraft
             }
         }
 
-        // Check if wallet is connected
         public bool IsWalletConnected()
         {
             try
