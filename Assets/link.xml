@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <linker>
+  <!-- Auki AR/Multiplayer assemblies -->
   <assembly fullname="Auki.QR" preserve="all" />
   <assembly fullname="com.aukilabs.unity.ark" preserve="all" />
   <assembly fullname="Auki.Ark" preserve="all" />
@@ -9,4 +10,34 @@
   <assembly fullname="Auki.ConjureKit.Grund" preserve="all" />
   <assembly fullname="com.aukilabs.unity.conjurekit" preserve="all" />
   <assembly fullname="Auki.ConjureKit" preserve="all" />
+  
+  <!-- Reown/Web3 assemblies -->
+  <assembly fullname="Reown.AppKit.Unity" preserve="all" />
+  <assembly fullname="Reown.Core" preserve="all" />
+  <assembly fullname="Reown.Sign.Unity" preserve="all" />
+  <assembly fullname="Reown.Sign.Nethereum.Unity" preserve="all" />
+  <assembly fullname="Reown.Core.Common" preserve="all" />
+  <assembly fullname="Reown.Core.Network" preserve="all" />
+  <assembly fullname="Reown.Core.Storage" preserve="all" />
+  <assembly fullname="Reown.Core.Crypto" preserve="all" />
+  <assembly fullname="Reown.Unity.Dependencies" preserve="all" />
+  
+  <!-- Newtonsoft.Json - Critical for JSON deserialization -->
+  <assembly fullname="Newtonsoft.Json" preserve="all" />
+  
+  <!-- Nethereum for Ethereum interactions -->
+  <assembly fullname="Nethereum.Unity" preserve="all" />
+  <assembly fullname="Nethereum.Hex" preserve="all" />
+  <assembly fullname="Nethereum.Util" preserve="all" />
+  <assembly fullname="Nethereum.RPC" preserve="all" />
+  <assembly fullname="Nethereum.Contracts" preserve="all" />
+  <assembly fullname="Nethereum.ABI" preserve="all" />
+  <assembly fullname="Nethereum.Signer" preserve="all" />
+  <assembly fullname="Nethereum.KeyStore" preserve="all" />
+  <assembly fullname="Nethereum.Web3" preserve="all" />
+  
+  <!-- System assemblies that might be needed for reflection -->
+  <assembly fullname="System.Core" preserve="all" />
+  <assembly fullname="System.Numerics" preserve="all" />
+  <assembly fullname="System.Security.Cryptography" preserve="all" />
 </linker>
