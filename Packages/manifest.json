@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.amplitude.unityplugin": "https://github.com/amplitude/unity-plugin.git?path=/Assets",
-    "com.aukilabs.unity.conjurekit": "0.6.91",
+    "com.aukilabs.unity.conjurekit": "0.6.89",
     "com.aukilabs.unity.grund": "0.6.11",
     "com.aukilabs.unity.manna": "0.6.98",
     "com.aukilabs.unity.vikja": "0.5.3",
@@ -26,6 +26,9 @@
     "com.unity.xr.arcore": "4.2.9",
     "com.unity.xr.arfoundation": "4.2.9",
     "com.unity.xr.arkit": "4.2.9",
+    "com.unity.xr.arsubsystems": "4.2.9",
+    "com.unity.xr.core-utils": "2.0.0",
+    "com.unity.xr.management": "4.0.1",
     "io.backtrace.unity": "3.13.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
