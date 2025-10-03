@@ -55,8 +55,6 @@ namespace Matterless.Floorcraft
             m_View.SetConnectButtonVisibility(false);
             m_View.SetDisconnectButtonVisibility(true);
             m_View.ShowWalletInfo();
-            m_View.SetWalletAddressText(m_WalletService.GetWalletAddress());
-            m_View.SetWalletBalanceText(m_WalletService.GetWalletBalance());
         }
 
         private void OnWalletDisconnected()

@@ -64,8 +64,12 @@ namespace Matterless.Floorcraft
         }
 
         private async Task OnAppKitInitialized(){
+            Debug.Log($"tomicz: Checking if AppKit is initialized - {AppKit.IsInitialized}");
             if(AppKit.IsInitialized){
                 Debug.Log("tomicz: AppKit initialized");
+
+                AppKit.AccountConnected += OnAccountConnected;
+                Debug.Log("tomicz: Account connected event subscribed");
             }
         }
 
@@ -78,133 +82,27 @@ namespace Matterless.Floorcraft
             AppKit.OpenModal(ViewType.Connect);
         }
 
-        private void OnAccountConnected(object sender, EventArgs e)
+        private void OnAccountConnected(object sender, Connector.AccountConnectedEventArgs e)
         {
             Debug.Log("tomicz: Account connected");
         }
 
         private void OnApplicationFocus(bool hasFocus)
         {
+            Debug.Log("tomicz: Is AppKit initialized: " + AppKit.IsInitialized);
             Debug.Log("tomicz: Application focus changed to: " + hasFocus);
-            if(AppKit.IsInitialized){
-                AppKit.AccountConnected += OnAccountConnected;
-                Debug.Log("tomicz: Account connected event subscribed");
+            Debug.Log("tomicz: IsModalOpen: " + AppKit.IsModalOpen);
+
+            if (AppKit.IsInitialized)
+            {
+                Debug.Log("tomicz: App gained focus - checking connection");
+                Debug.Log("tomicz: IsAccountConnected: " + AppKit.IsAccountConnected);
             }
         }
 
         private void OnApplicationPause(bool isPaused)
         {
             Debug.Log("tomicz: Application pause changed to: " + isPaused);
-        }
-
-        public async Task ResumeSession()
-        {
-            bool resumed = await AppKit.ConnectorController.TryResumeSessionAsync();
-
-            if (resumed)
-            {
-                MyAccountConnectedHandler();
-            }
-            else
-            {
-                AppKit.AccountConnected += (_, e) => MyAccountConnectedHandler();
-                AppKit.OpenModal();
-            }
-        }
-
-        public string GetWalletAddress()
-        {
-            try
-            {
-                var accounts = AppKit.ConnectorController.Accounts;
-                if (accounts != null && accounts.Any())
-                {
-                    // Return the first connected account's address
-                    return accounts.First().AccountId;
-                }
-                return null;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"Error getting wallet address: {ex.Message}");
-                return null;
-            }
-        }
-
-        public async Task<string> GetWalletBalanceAsync()
-        {
-            try
-            {
-                var address = GetWalletAddress();
-                if (string.IsNullOrEmpty(address))
-                {
-                    return "0";
-                }
-
-                return "0.0";
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"Error getting wallet balance: {ex.Message}");
-                return "0";
-            }
-        }
-
-        public string GetWalletBalance()
-        {
-            try
-            {
-                var address = GetWalletAddress();
-                if (string.IsNullOrEmpty(address))
-                {
-                    return "0";
-                }
-
-                return "0.0";
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"Error getting wallet balance: {ex.Message}");
-                return "0";
-            }
-        }
-
-        public string[] GetAllWalletAddresses()
-        {
-            try
-            {
-                var accounts = AppKit.ConnectorController.Accounts;
-                if (accounts != null && accounts.Any())
-                {
-                    return accounts.Select(account => account.AccountId).ToArray();
-                }
-                return new string[0];
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"Error getting wallet addresses: {ex.Message}");
-                return new string[0];
-            }
-        }
-
-        public bool IsWalletConnected()
-        {
-            try
-            {
-                var accounts = AppKit.ConnectorController.Accounts;
-                return accounts != null && accounts.Any();
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"Error checking wallet connection: {ex.Message}");
-                return false;
-            }
-        }
-
-        private void MyAccountConnectedHandler()
-        {
-            Debug.Log("Account connected successfully!");
-            onWalletConnected?.Invoke();
         }
         
         private void InstantiateAppKitPrefab()
