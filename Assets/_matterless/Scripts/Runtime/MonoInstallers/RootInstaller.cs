@@ -70,8 +70,6 @@ namespace Matterless.Floorcraft
             container.Bind<SplashScreenService>(m_AppConfigs.splashScreenSettings, m_EnvironmentSettings.version);
             container.Bind<Bootstrap>(m_AppContext, m_UiContext, m_DebugContext, m_AppConfigs);
             container.Bind<INetworkService, NetworkService>();
-
-            container.Bind<WalletService>(m_AppConfigs.walletSettings);
         }
     }
 }

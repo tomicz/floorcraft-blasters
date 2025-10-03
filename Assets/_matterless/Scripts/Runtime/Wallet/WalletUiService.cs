@@ -40,13 +40,13 @@ namespace Matterless.Floorcraft
 
         private void OnConnectWalletButtonClicked()
         {
-            m_WalletService.ConnectWallet();
+            m_WalletService.Connect();
             m_AudioUiService.PlaySelectSound();
         }
 
         private void OnDisconnectWalletButtonClicked()
         {
-            m_WalletService.DisconnectWallet();
+            m_WalletService.Disconnect();
             m_AudioUiService.PlaySelectSound();
         }
 
