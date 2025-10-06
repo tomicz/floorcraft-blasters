@@ -18,6 +18,8 @@ namespace Matterless.Floorcraft
         public event Action onWalletConnected;
         public event Action onWalletDisconnected;
 
+        private GameObject m_AppKitPrefab;
+
         public WalletService(WalletSettings walletSettings, IUnityEventDispatcher unityEventDispatcher)
         {
             m_WalletSettings = walletSettings;
@@ -70,6 +72,7 @@ namespace Matterless.Floorcraft
 
                 AppKit.AccountConnected += OnAccountConnected;
                 Debug.Log("tomicz: Account connected event subscribed");
+                Debug.Log($"tomicz: Does appkit prefab exist - {m_AppKitPrefab != null}");
             }
         }
 
@@ -115,7 +118,7 @@ namespace Matterless.Floorcraft
                 return;
             }
 
-            UnityEngine.Object.Instantiate(appKitPrefab);
+            m_AppKitPrefab = UnityEngine.Object.Instantiate(appKitPrefab);
         }
     }
 }

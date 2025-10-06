@@ -22,6 +22,10 @@
   <assembly fullname="Reown.Core.Crypto" preserve="all" />
   <assembly fullname="Reown.Unity.Dependencies" preserve="all" />
   
+  <!-- Additional Reown assemblies that might be getting stripped -->
+  <assembly fullname="Reown.Sign" preserve="all" />
+  <assembly fullname="Reown.Sign.Nethereum" preserve="all" />
+  
   <!-- Newtonsoft.Json - Critical for JSON deserialization -->
   <assembly fullname="Newtonsoft.Json" preserve="all" />
   
@@ -40,4 +44,6 @@
   <assembly fullname="System.Core" preserve="all" />
   <assembly fullname="System.Numerics" preserve="all" />
   <assembly fullname="System.Security.Cryptography" preserve="all" />
+  <assembly fullname="System.Net.Http" preserve="all" />
+  <assembly fullname="System.Threading.Tasks" preserve="all" />
 </linker>
