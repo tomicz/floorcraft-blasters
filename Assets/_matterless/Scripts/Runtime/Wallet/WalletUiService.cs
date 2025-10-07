@@ -26,8 +26,8 @@ namespace Matterless.Floorcraft
             m_WalletService.onWalletDisconnected += OnWalletDisconnected;
             m_WalletService.onModalStateChanged += OnModalStateChanged;
             
-            // Show the wallet UI immediately when service is created
-            m_View.Show();
+            // Hide by default - will be shown by UiFlowService when in Intro state
+            m_View.Hide();
             
             // Set initial state (show connect button, hide disconnect button)
             m_View.SetConnectButtonVisibility(true);

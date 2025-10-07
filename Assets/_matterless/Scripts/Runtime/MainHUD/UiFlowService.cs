@@ -28,6 +28,7 @@ namespace Matterless.Floorcraft
         private readonly MayhemUiService m_MayhemUiService;
         private readonly AukiWrapper m_AukiWrapper;
         private readonly IGameOverUiService m_GameOverUiService;
+        private readonly WalletUiService m_WalletUiService;
 
         public enum State
         {
@@ -73,7 +74,9 @@ namespace Matterless.Floorcraft
             PlaceableSelectorService.Settings placeableSettings,
             MannaService mannaService,
             MannaService.Settings mannaSettings,
-            IGameOverUiService gameOverUiService)
+            IGameOverUiService gameOverUiService,
+            WalletUiService walletUiService)
+
         {
             m_StateMachine = new StateMachine.StateMachine(
                 new StateMachine.State(State.Intro, IntroOnEnter, IntroOnExit),
@@ -159,6 +162,9 @@ namespace Matterless.Floorcraft
             m_LeaderboardService = leaderboardService;
             
             connectionService.onConnectionStateChanged += OnConnectionStateChanged;
+
+            // wallet
+            m_WalletUiService = walletUiService;
             
             // start state machine
             // TODO:: we can check for deep link and start UI from another state
@@ -218,12 +224,14 @@ namespace Matterless.Floorcraft
             m_GameOverUiService.Hide(true);
             
             m_MayhemModeService.isInHayhemMode = false;
+            m_WalletUiService.Show();
             
             m_CurrentState = State.Intro;
         }
         private void IntroOnExit()
         {
             m_IntroUiService.Hide();
+            m_WalletUiService.Hide();
         }
         #endregion
 
@@ -399,6 +407,7 @@ namespace Matterless.Floorcraft
                 case State.Intro:
                     m_IntroUiService.Show();
                     m_HeaderUiService.Show();
+                    m_WalletUiService.Show();
                     break;
                 case State.VehicleSelector:
                     m_VehicleSelectorService.Show();
@@ -424,6 +433,7 @@ namespace Matterless.Floorcraft
             m_SpawningService.Hide();
             m_VehicleSelectorService.Hide();
             m_GameOverUiService.Hide(false);
+            m_WalletUiService.Hide();
         }
 
         private void OnScreenOrientationChanged(ScreenOrientation orientation)
