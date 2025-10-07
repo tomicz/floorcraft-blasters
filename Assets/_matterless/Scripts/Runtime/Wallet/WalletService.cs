@@ -10,31 +10,35 @@ namespace Matterless.Floorcraft
 {
     public class WalletService
     {
-        private readonly WalletSettings m_WalletSettings;
-        private IUnityEventDispatcher m_UnityEventDispatcher;
-        private bool m_IsInitialized = false;
-
-        // Add events for UI to subscribe to
         public event Action onWalletConnected;
         public event Action onWalletDisconnected;
+        public event Action<bool> onModalStateChanged;
 
+        private readonly WalletSettings m_WalletSettings;
         private GameObject m_AppKitPrefab;
+        private bool m_IsInitialized = false;
 
-        public WalletService(WalletSettings walletSettings, IUnityEventDispatcher unityEventDispatcher)
+
+        public WalletService(WalletSettings walletSettings)
         {
             m_WalletSettings = walletSettings;
-            m_UnityEventDispatcher = unityEventDispatcher;
-
-            m_UnityEventDispatcher.unityOnApplicationFocus += OnApplicationFocus;
-            m_UnityEventDispatcher.unityOnApplicationPause += OnApplicationPause;
 
             InstantiateAppKitPrefab();
             InitializeWallet();
         }
 
-        public void Disconnect()
+        public async void Disconnect()
         {
-            onWalletDisconnected?.Invoke();
+            await AppKit.DisconnectAsync();
+        }
+
+        public string GetConnectedAddress()
+        {
+            if (AppKit.IsAccountConnected)
+            {
+                return AppKit.Account.Address;
+            }
+            return string.Empty;
         }
 
         private async Task InitializeWallet()
@@ -52,13 +56,6 @@ namespace Matterless.Floorcraft
                     }   
                 )
             );
-
-            Debug.Log("tomicz: AppKit config created");
-            Debug.Log("tomicz: " + m_WalletSettings.projectId);
-            Debug.Log("tomicz: " + m_WalletSettings.projectName);
-            Debug.Log("tomicz: " + m_WalletSettings.projectDescription);
-            Debug.Log("tomicz: " + m_WalletSettings.projectUrl);
-            Debug.Log("tomicz: " + m_WalletSettings.projectIconUrl);
             
             await AppKit.InitializeAsync(config);
             await OnAppKitInitialized();
@@ -66,19 +63,16 @@ namespace Matterless.Floorcraft
         }
 
         private async Task OnAppKitInitialized(){
-            Debug.Log($"tomicz: Checking if AppKit is initialized - {AppKit.IsInitialized}");
             if(AppKit.IsInitialized){
-                Debug.Log("tomicz: AppKit initialized");
-
                 AppKit.AccountConnected += OnAccountConnected;
-                Debug.Log("tomicz: Account connected event subscribed");
-                Debug.Log($"tomicz: Does appkit prefab exist - {m_AppKitPrefab != null}");
+                AppKit.AccountDisconnected += OnAccountDisconnected;
+                AppKit.ModalController.OpenStateChanged += OnModalStateChanged;
             }
         }
 
         public void Connect(){
             if(!AppKit.IsInitialized){
-                Debug.LogError("tomicz: AppKit not initialized");
+                Debug.LogError("AppKit not initialized");
                 return;
             }
 
@@ -87,25 +81,7 @@ namespace Matterless.Floorcraft
 
         private void OnAccountConnected(object sender, Connector.AccountConnectedEventArgs e)
         {
-            Debug.Log("tomicz: Account connected");
-        }
-
-        private void OnApplicationFocus(bool hasFocus)
-        {
-            Debug.Log("tomicz: Is AppKit initialized: " + AppKit.IsInitialized);
-            Debug.Log("tomicz: Application focus changed to: " + hasFocus);
-            Debug.Log("tomicz: IsModalOpen: " + AppKit.IsModalOpen);
-
-            if (AppKit.IsInitialized)
-            {
-                Debug.Log("tomicz: App gained focus - checking connection");
-                Debug.Log("tomicz: IsAccountConnected: " + AppKit.IsAccountConnected);
-            }
-        }
-
-        private void OnApplicationPause(bool isPaused)
-        {
-            Debug.Log("tomicz: Application pause changed to: " + isPaused);
+            onWalletConnected?.Invoke();
         }
         
         private void InstantiateAppKitPrefab()
@@ -119,6 +95,16 @@ namespace Matterless.Floorcraft
             }
 
             m_AppKitPrefab = UnityEngine.Object.Instantiate(appKitPrefab);
+        }
+
+        private void OnAccountDisconnected(object sender, Connector.AccountDisconnectedEventArgs e)
+        {
+            onWalletDisconnected?.Invoke();
+        }
+
+        private void OnModalStateChanged(object sender, ModalOpenStateChangedEventArgs e)
+        {
+            onModalStateChanged?.Invoke(e.IsOpen);
         }
     }
 }

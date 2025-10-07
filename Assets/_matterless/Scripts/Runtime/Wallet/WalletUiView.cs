@@ -13,7 +13,6 @@ namespace Matterless.Floorcraft
         [SerializeField] private Button m_ConnectWalletButton;
         [SerializeField] private Button m_DisconnectWalletButton;
         [SerializeField] private TMP_Text m_WalletAddressText;
-        [SerializeField] private TMP_Text m_WalletBalanceText;
 
         public override WalletUiView Init()
         {
@@ -42,24 +41,31 @@ namespace Matterless.Floorcraft
             m_ConnectWalletButton.interactable = isInteractable;
         }
 
-        public void SetWalletAddressText(string walletAddress)
+        public void SetDisconnectButtonInteractability(bool isInteractable)
         {
-            m_WalletAddressText.text = walletAddress;
+            m_DisconnectWalletButton.interactable = isInteractable;
         }
 
-        public void SetWalletBalanceText(string walletBalance)
+        public void SetWalletAddressText(string walletAddress)
         {
-            m_WalletBalanceText.text = walletBalance;
+            m_WalletAddressText.text = FormatWalletAddress(walletAddress);
+        }
+
+        private string FormatWalletAddress(string address)
+        {
+            if (string.IsNullOrEmpty(address) || address.Length < 10)
+                return address;
+
+            // Format as 0x1234...5678 (4 characters after 0x, then last 4 characters)
+            return $"{address.Substring(0, 6)}...{address.Substring(address.Length - 4)}";
         }
 
         public void ShowWalletInfo(){
             m_WalletAddressText.gameObject.SetActive(true);
-            m_WalletBalanceText.gameObject.SetActive(true);
         }
 
         public void HideWalletInfo(){
             m_WalletAddressText.gameObject.SetActive(false);
-            m_WalletBalanceText.gameObject.SetActive(false);
         }
     }
 }

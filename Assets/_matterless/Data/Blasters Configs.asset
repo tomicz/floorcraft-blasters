@@ -25,8 +25,8 @@ MonoBehaviour:
     m_HeartbeatFrequencyThresholdPercentage: 0.2
     m_OnlyMasterClient: 0
   m_AukiSettings:
-    m_AppKey: Auki posemesh App Key
-    m_AppSecret: Auki posemesh App Secret
+    m_AppKey: Get your Auki App Key from https://posemesh.auki.com
+    m_AppSecret: Get your Auki App Secret from https://posemesh.auki.com
     m_LogLevel: 3
     m_AutoJoinOnStart: 0
     m_UseGrund: 1
@@ -45,11 +45,14 @@ MonoBehaviour:
     m_UseThisSessionIdInEditor: 0
     m_SessionId: 
   m_WalletSettings:
-    m_ProjectId: Reown project id
-    m_ProjectName: Your project name
-    m_ProjectDescription: Your project description
-    m_ProjectUrl: Your project url
-    m_ProjectIconUrl: Your project icon
+    m_ProjectId: Get your Reown Project ID from https://cloud.reown.com
+    m_ProjectName: 'Floorcraft: Blasters'
+    m_ProjectDescription: 'Floorcraft: Blasters - A multiplayer AR combat racing
+      game where players battle with futuristic vehicles in shared augmented reality
+      spaces. Deploy weapons, dodge obstacles, and compete for the crown in real-time
+      mayhem mode on any floor surface.'
+    m_ProjectUrl: https://www.aukilabs.com/solutions/software/floorcraft
+    m_ProjectIconUrl: https://raw.githubusercontent.com/matterless/floorcraft-blasters/develop/Assets/_matterless/Graphics/AppIcons/Blasters-AppIcon.png
   m_RaycastSettings:
     m_TrackableType: 1
   m_ConnectionIndicationSettings:
