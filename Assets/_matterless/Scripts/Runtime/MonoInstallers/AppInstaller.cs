@@ -37,6 +37,7 @@ namespace Matterless.Floorcraft
             container.BindInstance(appConfig.npcEnemyServiceSettings);
             container.BindInstance(appConfig.mayhemModeSettings);
             container.BindInstance(appConfig.worldScaleSettings);
+            container.BindInstance(appConfig.walletSettings);
             
             container.Bind<WorldScaleService>();
             container.Bind<PropertiesECSService.Settings>();
@@ -99,6 +100,9 @@ namespace Matterless.Floorcraft
             container.Bind<IDomainService, DomainService>();
             container.Bind<IHeartbeatService, HeartbeatService>();
             container.Bind<DomainAssetPlacementService>();
+
+            // Wallet Services
+            container.Bind<WalletService>();
         }
     }
 }

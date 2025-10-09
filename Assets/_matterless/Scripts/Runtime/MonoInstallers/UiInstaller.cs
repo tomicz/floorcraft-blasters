@@ -36,6 +36,8 @@ namespace Matterless.Floorcraft
             // this is a mock implementation of IScreenService
             // that locks screen orientation changes
             container.Bind<IScreenService, ScreenServiceLocked>();
+
+            container.Bind<WalletUiService>();
         }
     }
 }

@@ -15,6 +15,7 @@ namespace Matterless.Floorcraft
         [SerializeField] private DomainSettings m_DomainSettings;
         [SerializeField] private HeartbeatService.Settings m_HeartbeatSettings;
         [SerializeField] private AukiSettings m_AukiSettings;
+        [SerializeField] private WalletSettings m_WalletSettings;
         [SerializeField] private RaycastService.Settings m_RaycastSettings;
         [SerializeField] private ConnectionIndicatorService.Settings m_ConnectionIndicationSettings;
         [SerializeField] private NetworkService.Settings m_NetworkServiceSettings;
@@ -57,6 +58,7 @@ namespace Matterless.Floorcraft
         public DomainSettings domainSettings => m_DomainSettings;
         public HeartbeatService.Settings heartbeatSettings => m_HeartbeatSettings;
         public AukiSettings aukiSettings => m_AukiSettings;
+        public WalletSettings walletSettings => m_WalletSettings;
         public RaycastService.Settings raycastSettings => m_RaycastSettings;
         public ConnectionIndicatorService.Settings connectionIndicationSettings => m_ConnectionIndicationSettings;
         public NetworkService.Settings networkServiceSettings => m_NetworkServiceSettings;

@@ -1,4 +1,4 @@
-﻿using Matterless.Module.RemoteConfigs;
+using Matterless.Module.RemoteConfigs;
 using UnityEngine;
 using MatterlessRemoteConfigsSettings =  Matterless.Module.RemoteConfigs.RemoteConfigSettings;
 
@@ -29,7 +29,7 @@ namespace Matterless.Floorcraft
 #elif MATTERLESS_APPSTORE
                 return m_ProdRemoteConfigs;
 #else
-                throw new System.Exception("You have not defined an environment: MATTERLESS_DEV, MATTERLESS_STG, MATTERLESS_PROD");
+                throw new System.Exception("You have not defined an environment: MATTERLESS_DEV, MATTERLESS_STG, MATTERLESS_PROD. Also make sure to switch to iOS or Android platform in Unity.");
 #endif
             }
         }
