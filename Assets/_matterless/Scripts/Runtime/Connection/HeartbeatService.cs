@@ -169,9 +169,24 @@ namespace Matterless.Floorcraft
             if (!m_AukiWrapper.isConnected || !m_CanRespondHeartbeat)
                 return;
 
+            // Check if we have a valid session before comparing
+            var currentSession = m_AukiWrapper.GetSession();
+            if (currentSession == null)
+            {
+                Debug.LogWarning("HeartbeatService: No active Auki session, cannot verify domain session");
+                return;
+            }
+
+            // Check if session response has valid session_id
+            if (string.IsNullOrEmpty(sessionResponse?.session_id))
+            {
+                Debug.LogWarning("HeartbeatService: Heartbeat response has no session_id");
+                return;
+            }
+
             // We check on beat success that if we are still connected to a session and if that session is the same with the domain session
             // It will *nearly* always be same while playing the game normally but it may change if we take the app to the background for a while
-            if (sessionResponse.session_id != m_AukiWrapper.GetSession().Id)
+            if (sessionResponse.session_id != currentSession.Id)
             {
                 Debug.Log("Domain session is the different with our session!");
                 // Should we show to user the error and force them to connect new session?
