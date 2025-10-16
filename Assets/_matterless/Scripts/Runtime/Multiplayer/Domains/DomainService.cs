@@ -330,7 +330,6 @@ namespace Matterless.Floorcraft
                 m_AukiSettings.appKey
             );
             
-
             // post my session id to DDS (with authentication)
             m_RestService.SecurePostJson(
                 // url
@@ -448,7 +447,7 @@ namespace Matterless.Floorcraft
 
 #if UNITY_EDITOR
         int _keyRecognition = 0;
-        const string _testDomainId = "2c7383f1-71fd-4042-a5fd-3da26beba60g";
+        const string _testDomainId = "2c7383f1-71fd-4042-a5fd-3da26beba60f"; // Fixed: was 60g (invalid), now 60f (valid UUID)
 
         public void Tick(float deltaTime, float unscaledDeltaTime)
         {
@@ -458,7 +457,12 @@ namespace Matterless.Floorcraft
                 _keyRecognition++;
             else if (Input.GetKeyDown(KeyCode.M) && _keyRecognition == 2)
             {
-                OnDomainQrCodeScanned(_testDomainId);
+                // Use the configured domain ID from AukiSettings if available, otherwise use test domain ID
+                string domainId = !string.IsNullOrEmpty(m_AukiSettings.appDomainId) 
+                    ? m_AukiSettings.appDomainId 
+                    : _testDomainId;
+                
+                OnDomainQrCodeScanned(domainId);
                 _keyRecognition = 0;
             }
         }

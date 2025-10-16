@@ -198,8 +198,36 @@ namespace Matterless.Floorcraft
             // Debug.Log(error.code +"=="+HTTP_RESPONSE_CODE.UNAUTHORIZED);
             // Debug.LogWarning(m_CurrentAuthResponse == null);
 
-            var response = JsonUtility.FromJson<ErrorResponse>(error.raw);
-            response.rawCode = error.code;
+            ErrorResponse response;
+            
+            // Try to parse the error response, but handle cases where it's not valid JSON
+            if (string.IsNullOrEmpty(error.raw))
+            {
+                response = new ErrorResponse
+                {
+                    rawCode = error.code,
+                    code = error.code,
+                    message = $"HTTP Error {error.code}"
+                };
+            }
+            else
+            {
+                try
+                {
+                    response = JsonUtility.FromJson<ErrorResponse>(error.raw);
+                    response.rawCode = error.code;
+                }
+                catch (System.Exception)
+                {
+                    response = new ErrorResponse
+                    {
+                        rawCode = error.code,
+                        code = error.code,
+                        message = error.raw
+                    };
+                }
+            }
+            
             onError?.Invoke(response);
 
             //if (error.raw != string.Empty)
