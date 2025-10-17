@@ -65,13 +65,12 @@ namespace Matterless.Floorcraft
         private const string POWERUP_TYPE_PARAM = "item type";
         private const string POWERUP_QUANTITY_PARAM = "Quantity";
 
-        public AnalyticsService(IUnityEventDispatcher unityEventDispatcher)
+        public AnalyticsService(IUnityEventDispatcher unityEventDispatcher, AnalyticsSettings settings)
         {
             m_Amplitude = Amplitude.Instance;
-            m_Amplitude.logging = true;
-            m_Amplitude.init("YOUR_AMPLITUDE_ID");
+            m_Amplitude.logging = settings.enableLogging;
+            m_Amplitude.init(settings.amplitudeApiKey);
             SendEvent(AnalyticsEvent.APP_LAUNCH);
-            Debug.Log("Test");
             m_DomainDictionary = new Dictionary<string, object>()
             {
                 {DOMAIN_ID_PARAM, string.Empty}
