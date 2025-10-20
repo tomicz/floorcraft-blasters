@@ -8,11 +8,12 @@ namespace Matterless.Floorcraft
     public class WalletUiView : UIView<WalletUiView>
     {
         public event Action onConnectWalletButtonClicked;
-        public event Action onDisconnectWalletButtonClicked;
+        public event Action onOpenWalletButtonClicked;
 
         [SerializeField] private Button m_ConnectWalletButton;
         [SerializeField] private Button m_DisconnectWalletButton;
-        [SerializeField] private TMP_Text m_WalletAddressText;
+        [SerializeField] private Button m_OpenWalletButton;
+        [SerializeField] private TMP_Text m_OnConnectedAddressText;
 
         public override WalletUiView Init()
         {
@@ -23,7 +24,7 @@ namespace Matterless.Floorcraft
         private void AddListeners()
         {
             m_ConnectWalletButton.onClick.AddListener(() => onConnectWalletButtonClicked?.Invoke());
-            m_DisconnectWalletButton.onClick.AddListener(() => onDisconnectWalletButtonClicked?.Invoke());
+            m_OpenWalletButton.onClick.AddListener(() => onOpenWalletButtonClicked?.Invoke());
         }
 
         public void SetConnectButtonVisibility(bool isVisible)
@@ -31,9 +32,9 @@ namespace Matterless.Floorcraft
             m_ConnectWalletButton.gameObject.SetActive(isVisible);
         }
 
-        public void SetDisconnectButtonVisibility(bool isVisible)
+        public void SetOpenWalletButtonVisibility(bool isVisible)
         {
-            m_DisconnectWalletButton.gameObject.SetActive(isVisible);
+            m_OpenWalletButton.gameObject.SetActive(isVisible);
         }
 
         public void SetConnectButtonInteractability(bool isInteractable)
@@ -41,14 +42,14 @@ namespace Matterless.Floorcraft
             m_ConnectWalletButton.interactable = isInteractable;
         }
 
-        public void SetDisconnectButtonInteractability(bool isInteractable)
+        public void SetOpenWalletButtonInteractability(bool isInteractable)
         {
-            m_DisconnectWalletButton.interactable = isInteractable;
+            m_OpenWalletButton.interactable = isInteractable;
         }
 
-        public void SetWalletAddressText(string walletAddress)
+        public string GetWalletAddressText(string walletAddress)
         {
-            m_WalletAddressText.text = FormatWalletAddress(walletAddress);
+            return FormatWalletAddress(walletAddress);
         }
 
         private string FormatWalletAddress(string address)
@@ -61,11 +62,14 @@ namespace Matterless.Floorcraft
         }
 
         public void ShowWalletInfo(){
-            m_WalletAddressText.gameObject.SetActive(true);
         }
 
         public void HideWalletInfo(){
-            m_WalletAddressText.gameObject.SetActive(false);
+        }
+
+        public void SetConnectedAddressText(string text)
+        {
+            m_OnConnectedAddressText.text = text;
         }
     }
 }
