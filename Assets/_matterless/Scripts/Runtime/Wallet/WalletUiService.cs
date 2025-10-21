@@ -126,6 +126,10 @@ namespace Matterless.Floorcraft
         {
             // Disconnect wallet and hide wallet info container
             m_AudioUiService.PlaySelectSound();
+            
+            // Disable open wallet button during disconnection process
+            m_View.SetOpenWalletButtonInteractability(false);
+            
             m_WalletService.Disconnect();
             m_View.HideWalletInfo();
         }
