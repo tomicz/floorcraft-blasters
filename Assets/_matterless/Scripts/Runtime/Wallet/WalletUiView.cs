@@ -21,6 +21,8 @@ namespace Matterless.Floorcraft
         [SerializeField] private GameObject m_WalletInfoBackground;
         [SerializeField] private Canvas m_WalletCanvas;
         [SerializeField] private TMP_Text m_WalletAddressText;
+        [SerializeField] private TMP_Text m_EthBalanceText;
+        [SerializeField] private TMP_Text m_AukiBalanceText;
 
         public override WalletUiView Init()
         {
@@ -101,6 +103,16 @@ namespace Matterless.Floorcraft
         public void SetWalletAddress(string text)
         {
             m_WalletAddressText.text = text;
+        }
+
+        public void SetEthBalanceText(string text)
+        {
+            m_EthBalanceText.text = text;
+        }
+
+        public void SetAukiBalanceText(string text)
+        {
+            m_AukiBalanceText.text = text;
         }
     }
 }

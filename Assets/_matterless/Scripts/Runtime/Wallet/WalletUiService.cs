@@ -1,5 +1,6 @@
 using System;
 using Matterless.Inject;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Matterless.Floorcraft
@@ -75,6 +76,7 @@ namespace Matterless.Floorcraft
             m_View.HideWalletInfo();
             m_View.SetConnectButtonInteractability(true);
             m_View.SetOpenWalletButtonInteractability(true);
+            ShowBalance();
         }
 
         private void OnWalletDisconnected()
@@ -90,6 +92,11 @@ namespace Matterless.Floorcraft
             m_View.SetConnectButtonInteractability(true);
             m_View.SetOpenWalletButtonInteractability(false);
             m_View.ResetCanvasSortingOrder();
+        }
+
+        private async void ShowBalance(){
+            string balance = await m_WalletService.GetWalletNativeBalanceAsync();
+            m_View.SetEthBalanceText(balance);
         }
 
         public void Show()
