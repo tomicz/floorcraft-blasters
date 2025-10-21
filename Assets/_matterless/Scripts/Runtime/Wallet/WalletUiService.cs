@@ -12,31 +12,33 @@ namespace Matterless.Floorcraft
         private readonly INotificationService m_NotificationService;
         private readonly WalletUiView m_View;
 
-        public WalletUiService(WalletService walletService, AudioUiService audioUiService, IAnalyticsService analyticsService, INotificationService notificationService){
+        public WalletUiService(WalletService walletService, AudioUiService audioUiService, IAnalyticsService analyticsService, INotificationService notificationService)
+        {
             m_WalletService = walletService;
             m_AudioUiService = audioUiService;
             m_AnalyticsService = analyticsService;
             m_NotificationService = notificationService;
-            
+
             // Create the view
             m_View = WalletUiView.Create("UIPrefabs/UIP_WalletView").Init();
-            
+
             // Wire up events
             m_View.onConnectWalletButtonClicked += OnConnectWalletButtonClicked;
             m_View.onOpenWalletButtonClicked += OnOpenWalletButtonClicked;
-            
+            m_View.onHideWalletButtonClicked += OnHideWalletButtonClicked;
+            m_View.onDisconnectWalletButtonClicked += OnDisconnectWalletButtonClicked;
+
             // Subscribe to wallet state changes
             m_WalletService.onWalletConnected += OnWalletConnected;
             m_WalletService.onWalletDisconnected += OnWalletDisconnected;
             m_WalletService.onModalStateChanged += OnModalStateChanged;
-            
+
             // Hide by default - will be shown by UiFlowService when in Intro state
             m_View.Hide();
-            
-            // Set initial state (show connect button, hide open wallet button)
+
+            // Set initial state (show connect button, hide open wallet button, hide wallet info)
             m_View.SetConnectButtonVisibility(true);
             m_View.SetOpenWalletButtonVisibility(false);
-            m_View.HideWalletInfo();
         }
 
         private void OnConnectWalletButtonClicked()
@@ -48,28 +50,28 @@ namespace Matterless.Floorcraft
 
         private void OnOpenWalletButtonClicked()
         {
-            // TODO: Implement wallet menu/area functionality
-            // This will open the wallet menu where disconnect functionality will be available
+            // Open wallet info container
             m_AudioUiService.PlaySelectSound();
-            Debug.Log("Open Wallet clicked - Wallet menu functionality to be implemented");
+            m_View.ShowWalletInfo();
         }
 
         private void OnWalletConnected()
         {
             m_View.SetConnectButtonVisibility(false);
             m_View.SetOpenWalletButtonVisibility(true);
-            
+
             string address = m_WalletService.GetConnectedAddress();
             string textAddress = m_View.GetWalletAddressText(address);
             m_View.SetConnectedAddressText(textAddress);
-            
+
             // Track wallet connection for user analytics
             m_AnalyticsService.SetWalletAddress(address);
-            
+
             // Show wallet connected notification
             m_NotificationService.ShowMessage(NotificationType.WalletConnected);
-            
-            m_View.ShowWalletInfo();
+
+            // Do NOT show wallet info automatically - only on Open Wallet button click
+            m_View.HideWalletInfo();
             m_View.SetConnectButtonInteractability(true);
             m_View.SetOpenWalletButtonInteractability(true);
         }
@@ -78,15 +80,15 @@ namespace Matterless.Floorcraft
         {
             // Track wallet disconnection for user analytics
             m_AnalyticsService.ClearWalletAddress();
-            
+
             // Show wallet disconnected notification
             m_NotificationService.ShowMessage(NotificationType.WalletDisconnected);
-            
+
             m_View.SetConnectButtonVisibility(true);
             m_View.SetOpenWalletButtonVisibility(false);
-            m_View.SetConnectedAddressText("Wallet");
-            m_View.HideWalletInfo();
             m_View.SetConnectButtonInteractability(true);
+            m_View.SetOpenWalletButtonInteractability(false);
+            m_View.ResetCanvasSortingOrder();
         }
 
         public void Show()
@@ -97,6 +99,21 @@ namespace Matterless.Floorcraft
         public void Hide()
         {
             m_View.Hide();
+        }
+
+        private void OnHideWalletButtonClicked()
+        {
+            // Hide wallet info container
+            m_AudioUiService.PlaySelectSound();
+            m_View.HideWalletInfo();
+        }
+
+        private void OnDisconnectWalletButtonClicked()
+        {
+            // Disconnect wallet and hide wallet info container
+            m_AudioUiService.PlaySelectSound();
+            m_WalletService.Disconnect();
+            m_View.HideWalletInfo();
         }
 
         private void OnModalStateChanged(bool isOpen)
