@@ -121,6 +121,9 @@ namespace Matterless.Floorcraft
 
         public bool sessionIdDomain { get; private set; } = false;
         public string currentDomainId => m_DomainId;
+        public bool IsUserInitiatedConnection => m_IsUserInitiatedConnection;
+
+        private bool m_IsUserInitiatedConnection = false;
 
         public DomainService(
             IAukiWrapper aukiWrapper,
@@ -304,6 +307,7 @@ namespace Matterless.Floorcraft
             m_DomainId = domainId;
             m_AnalyticsService.SeenDomain(domainId);
             
+            m_IsUserInitiatedConnection = true;
             // Disconnect from current session first (if any)
             m_AukiWrapper.Leave();
             
