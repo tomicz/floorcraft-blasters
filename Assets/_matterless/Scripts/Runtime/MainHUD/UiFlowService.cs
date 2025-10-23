@@ -198,6 +198,8 @@ namespace Matterless.Floorcraft
                 return;
             }
 
+            m_StateMachine.SwitchState(state);
+ 
             if (state == (int)State.Intro)
             {
                 m_ConnectionService.NewSession();
@@ -206,9 +208,7 @@ namespace Matterless.Floorcraft
             {
                 m_SpeederService.Despawn(true);
                 m_RespawnService.AddOneRespawn();
-            }
-            
-            m_StateMachine.SwitchState(state);
+            }           
         }
 
         private void OnConnectionStateChanged(ConnectionState state)
