@@ -225,6 +225,7 @@ namespace Matterless.Floorcraft
                     m_NotificationService.ShowMessage(NotificationType.OnJoinedRoom);
                     m_StateMachine.SwitchState((int)State.VehicleSelector);
                     m_RendererService.DisableDimm();
+                    m_DomainService.SetUserInitiatedConnection(false);
                 }
             }
         }

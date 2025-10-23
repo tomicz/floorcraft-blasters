@@ -165,6 +165,10 @@ namespace Matterless.Floorcraft
             mannaService.onPoseSelect += PoseSelector;
         }
 
+        public void SetUserInitiatedConnection(bool value){
+            m_IsUserInitiatedConnection = value;
+        }
+
         private void ResetValuesOnSessionLeft()
         {
             // Track domain exit with duration before resetting
@@ -307,7 +311,7 @@ namespace Matterless.Floorcraft
             m_DomainId = domainId;
             m_AnalyticsService.SeenDomain(domainId);
             
-            m_IsUserInitiatedConnection = true;
+            SetUserInitiatedConnection(true);
             // Disconnect from current session first (if any)
             m_AukiWrapper.Leave();
             
