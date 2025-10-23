@@ -208,6 +208,7 @@ namespace Matterless.Floorcraft
             {
                 m_SpeederService.Despawn(true);
                 m_RespawnService.AddOneRespawn();
+                m_SpeederService.RemoveSpeeder();
             }           
         }
 

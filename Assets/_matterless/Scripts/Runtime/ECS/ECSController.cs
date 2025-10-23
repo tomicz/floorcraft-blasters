@@ -39,6 +39,12 @@ namespace Matterless.Floorcraft
             m_AukiWrapper.onComponentAdd += OnOtherComponentAdded;
             m_AukiWrapper.onComponentUpdate += OnOtherComponentUpdated;
             m_AukiWrapper.onComponentDelete += OnOtherComponentDeleted;
+            m_AukiWrapper.onLeft += OnLeftSession;
+        }
+
+        private void OnLeftSession()
+        {
+            ClearDataStructures();
         }
 
         #region InitComponent

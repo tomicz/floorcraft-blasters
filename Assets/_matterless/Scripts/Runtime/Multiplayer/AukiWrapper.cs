@@ -156,6 +156,8 @@ namespace Matterless.Floorcraft
         public void Leave()
         {
             Debug.Log("[domain] left");
+            // Immediately set isConnected to false to prevent timing issues
+            isConnected = false;
             m_ConjureKit.Disconnect();
         }
 
@@ -364,7 +366,11 @@ namespace Matterless.Floorcraft
 
         private void OnLeft(Session session)
         {
-            isConnected = false;
+            // Only set isConnected to false if it's not already false (avoid overriding immediate setting)
+            if (isConnected)
+            {
+                isConnected = false;
+            }
             m_MyEntities.Clear();
             onLeft?.Invoke();
         }
