@@ -57,10 +57,15 @@ namespace Matterless.Floorcraft
             get
             {
                 if(!isConnected) return false;
+                
+                var session = m_ConjureKit?.GetSession();
+                if (session == null) return false;
 
-                var myId = m_ConjureKit.GetSession().ParticipantId;
+                var myId = session.ParticipantId;
+                var participants = session.GetParticipants();
+                if (participants == null) return false;
 
-                foreach (var participant in m_ConjureKit.GetSession().GetParticipants())
+                foreach (var participant in participants)
                 {
                     if (myId > participant.Id)
                         return false;
