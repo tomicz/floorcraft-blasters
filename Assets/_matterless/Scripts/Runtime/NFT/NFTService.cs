@@ -22,7 +22,6 @@ namespace Matterless.Floorcraft
         public NFTService(ERC1155Contract contract)
         {
             m_Contract = contract;
-            Debug.Log($"[NFT Service] Initialized with contract: {m_Contract.ContractAddress}");
         }
         
         /// <summary>
@@ -45,12 +44,9 @@ namespace Matterless.Floorcraft
         {
             try
             {
-                Debug.Log($"[NFT Service] Querying ownership for: {ownerAddress}");
-                
                 // Use ERC-1155 batch query method
                 var ownedTokenIds = await m_Contract.GetOwnedTokenIds(ownerAddress);
                 
-                Debug.Log($"[NFT Service] Total NFTs owned: {ownedTokenIds.Count}");
                 return ownedTokenIds;
             }
             catch (Exception ex)
@@ -70,7 +66,6 @@ namespace Matterless.Floorcraft
             try
             {
                 var uri = await m_Contract.URI(BigInteger.Parse(tokenId));
-                Debug.Log($"[NFT Service] Token {tokenId} URI: {uri}");
                 return uri;
             }
             catch (Exception ex)
