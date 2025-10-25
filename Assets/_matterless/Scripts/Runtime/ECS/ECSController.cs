@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Auki.ConjureKit.Hagall.Messages;
 using Auki.ConjureKit;
-using static UnityEngine.CullingGroup;
 
 namespace Matterless.Floorcraft
 {
@@ -26,26 +25,12 @@ namespace Matterless.Floorcraft
         public ECSController(IAukiWrapper aukiWrapper)
         {
             m_AukiWrapper = aukiWrapper;
-            // sessions
-            // we handle this from Connection Service
-            //m_AukiWrapper.onJoined += OnJoinedSession;
-            //m_AukiWrapper.onLeft += OnLeftSession;
-            // entities
-            // This event is triggered only for entities created by other participants in the session.
-            // m_AukiWrapper.onEntityAdded += RegisterComponentInDictionary;
-            // This event is triggered only for entities deleted by other participants in the session.
             m_AukiWrapper.onEntityDeleted += OnEntityDeleted;
-            // components
             m_AukiWrapper.onComponentAdd += OnOtherComponentAdded;
             m_AukiWrapper.onComponentUpdate += OnOtherComponentUpdated;
             m_AukiWrapper.onComponentDelete += OnOtherComponentDeleted;
-            m_AukiWrapper.onLeft += OnLeftSession;
         }
 
-        private void OnLeftSession()
-        {
-            ClearDataStructures();
-        }
 
         #region InitComponent
         private bool m_ComponentInitInProgress;
