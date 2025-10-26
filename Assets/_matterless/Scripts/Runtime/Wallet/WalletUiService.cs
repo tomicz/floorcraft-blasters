@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Matterless.Inject;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -12,6 +13,9 @@ namespace Matterless.Floorcraft
         private readonly IAnalyticsService m_AnalyticsService;
         private readonly INotificationService m_NotificationService;
         private readonly WalletUiView m_View;
+        
+        // NFT sprite cache - key is token ID, value is sprite
+        private readonly Dictionary<string, Sprite> m_NFTSpriteCache = new Dictionary<string, Sprite>();
 
         public WalletUiService(WalletService walletService, AudioUiService audioUiService, IAnalyticsService analyticsService, INotificationService notificationService)
         {
@@ -54,6 +58,9 @@ namespace Matterless.Floorcraft
             // Open wallet info container
             m_AudioUiService.PlaySelectSound();
             m_View.ShowWalletInfo();
+            
+            // Re-display cached NFT images
+            DisplayCachedNFTImages();
         }
 
         private async void OnWalletConnected()
@@ -96,8 +103,9 @@ namespace Matterless.Floorcraft
             // Show wallet disconnected notification
             m_NotificationService.ShowMessage(NotificationType.WalletDisconnected);
 
-            // Clear NFT containers
+            // Clear NFT containers and cache
             m_View.ClearNFTContainers();
+            m_NFTSpriteCache.Clear();
 
             m_View.SetConnectButtonVisibility(true);
             m_View.SetOpenWalletButtonVisibility(false);
@@ -128,26 +136,30 @@ namespace Matterless.Floorcraft
                     return;
                 }
                 
-                if (nftCount > m_View.m_InstantiatedContainersPublic.Count)
-                {
-                    Debug.LogWarning($"Wallet owns {nftCount} NFTs but only {m_View.m_InstantiatedContainersPublic.Count} containers available");
-                    nftCount = m_View.m_InstantiatedContainersPublic.Count;
-                }
-                
                 var nftService = new NFTService(m_WalletService.chainSettings.nftContractAddress, m_WalletService.chainSettings.rpcUrl);
                 
-                for (int i = 0; i < nftCount; i++)
+                for (int i = 0; i < ownedTokenIds.Count; i++)
                 {
                     try
                     {
-                        Sprite sprite = await nftService.LoadNFTImage(ownedTokenIds[i]);
+                        string tokenId = ownedTokenIds[i];
+                        
+                        // Check if already cached
+                        if (m_NFTSpriteCache.ContainsKey(tokenId))
+                        {
+                            Debug.Log($"Token {tokenId} already cached, skipping download");
+                            continue;
+                        }
+                        
+                        Sprite sprite = await nftService.LoadNFTImage(tokenId);
                         if (sprite != null)
                         {
-                            m_View.SetNFTImage(i, sprite);
+                            // Store in cache
+                            m_NFTSpriteCache[tokenId] = sprite;
                         }
                         else
                         {
-                            Debug.LogWarning($"Failed to load sprite for token {ownedTokenIds[i]}");
+                            Debug.LogWarning($"Failed to load sprite for token {tokenId}");
                         }
                     }
                     catch (Exception ex)
@@ -155,10 +167,50 @@ namespace Matterless.Floorcraft
                         Debug.LogError($"Failed to load NFT image for token {ownedTokenIds[i]}: {ex.Message}");
                     }
                 }
+                
+                // Display cached images after download completes
+                DisplayCachedNFTImages();
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Error loading NFT images: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Display cached NFT images in containers
+        /// </summary>
+        private void DisplayCachedNFTImages()
+        {
+            try
+            {
+                var ownedTokenIds = m_WalletService.GetOwnedTokenIds();
+                
+                if (ownedTokenIds.Count == 0 || m_View.m_InstantiatedContainersPublic.Count == 0)
+                {
+                    return;
+                }
+                
+                int displayCount = Mathf.Min(ownedTokenIds.Count, m_View.m_InstantiatedContainersPublic.Count);
+                
+                for (int i = 0; i < displayCount; i++)
+                {
+                    string tokenId = ownedTokenIds[i];
+                    
+                    // Check if sprite is cached
+                    if (m_NFTSpriteCache.TryGetValue(tokenId, out Sprite sprite))
+                    {
+                        m_View.SetNFTImage(i, sprite);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"No cached sprite for token {tokenId}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error displaying cached NFT images: {ex.Message}");
             }
         }
 
