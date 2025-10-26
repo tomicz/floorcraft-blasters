@@ -168,14 +168,129 @@ namespace Matterless.Floorcraft
         {
             try
             {
-                var function = m_Contract.GetFunction("uri");
-                var uri = await function.CallAsync<string>(tokenId);
-                return uri;
+                // Try Nethereum first
+                try
+                {
+                    var function = m_Contract.GetFunction("uri");
+                    var uri = await function.CallAsync<string>(tokenId);
+                    return uri;
+                }
+                catch (Exception nethereumEx)
+                {
+                    Debug.LogWarning($"Nethereum failed, trying direct RPC: {nethereumEx.Message}");
+                    // Fallback to direct RPC call
+                    return await URIDirectRpc(tokenId);
+                }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[ERC1155Contract] URI failed for token {tokenId}: {ex.Message}");
+                Debug.LogError($"ERC1155Contract URI failed for token {tokenId}: {ex.Message}");
                 throw;
+            }
+        }
+        
+        private async Task<string> URIDirectRpc(BigInteger tokenId)
+        {
+            try
+            {
+                using (var httpClient = new System.Net.Http.HttpClient())
+                {
+                    // ERC-1155 uri function signature: uri(uint256)
+                    // Function selector: 0x0e89341c
+                    string functionSelector = "0x0e89341c";
+                    
+                    // Pad tokenId to 32 bytes (64 hex characters)
+                    string paddedTokenId = tokenId.ToString("X").PadLeft(64, '0');
+                    
+                    string data = functionSelector + paddedTokenId;
+                    
+                    var rpcRequest = new
+                    {
+                        jsonrpc = "2.0",
+                        method = "eth_call",
+                        @params = new object[] 
+                        { 
+                            new { to = m_ContractAddress, data = data }, 
+                            "latest" 
+                        },
+                        id = 1
+                    };
+
+                    string jsonRequest = Newtonsoft.Json.JsonConvert.SerializeObject(rpcRequest);
+                    var content = new System.Net.Http.StringContent(jsonRequest, System.Text.Encoding.UTF8, "application/json");
+                    var response = await httpClient.PostAsync(m_RpcUrl, content);
+                    
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    
+                    var rpcResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<RpcResponse>(responseContent);
+                    
+                    if (rpcResponse.error != null)
+                    {
+                        Debug.LogError($"RPC Error for uri(): {rpcResponse.error}");
+                        return string.Empty;
+                    }
+                    
+                    string resultHex = rpcResponse.result;
+                    
+                    if (string.IsNullOrEmpty(resultHex) || resultHex == "0x")
+                    {
+                        Debug.LogWarning($"Empty result for uri() token {tokenId}");
+                        return string.Empty;
+                    }
+                    
+                    // Decode ABI-encoded string
+                    string decodedUri = DecodeAbiEncodedString(resultHex);
+                    
+                    return decodedUri;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Direct RPC URI failed: {ex.Message}");
+                return string.Empty;
+            }
+        }
+        
+        private string DecodeAbiEncodedString(string hexData)
+        {
+            try
+            {
+                // Remove '0x' prefix
+                string hex = hexData.StartsWith("0x") ? hexData.Substring(2) : hexData;
+                
+                // First 64 characters (32 bytes) are the offset - skip it
+                // Next 64 characters (32 bytes) are the length of the string
+                if (hex.Length < 128)
+                {
+                    Debug.LogError($"Invalid hex data length: {hex.Length}");
+                    return string.Empty;
+                }
+                
+                string lengthHex = hex.Substring(64, 64);
+                int stringLength = System.Convert.ToInt32(lengthHex, 16);
+                
+                // Then comes the actual string data (padded to 32-byte boundary)
+                string dataHex = hex.Substring(128);
+                
+                // Convert hex to bytes manually
+                byte[] bytes = new byte[stringLength];
+                for (int i = 0; i < stringLength; i++)
+                {
+                    if (i * 2 + 1 < dataHex.Length)
+                    {
+                        string hexByte = dataHex.Substring(i * 2, 2);
+                        bytes[i] = System.Convert.ToByte(hexByte, 16);
+                    }
+                }
+                
+                // Convert bytes to string
+                string result = System.Text.Encoding.UTF8.GetString(bytes);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to decode ABI string: {ex.Message}");
+                return string.Empty;
             }
         }
         

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using UnityEngine;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
 
 namespace Matterless.Floorcraft
 {
@@ -93,6 +95,165 @@ namespace Matterless.Floorcraft
                 Debug.LogError($"[NFT Service] Error checking token ownership: {ex.Message}");
                 return false;
             }
+        }
+        
+        /// <summary>
+        /// Load NFT image as Sprite from token metadata
+        /// </summary>
+        /// <param name="tokenId">Token ID</param>
+        /// <returns>Sprite loaded from NFT image</returns>
+        public async Task<Sprite> LoadNFTImage(string tokenId)
+        {
+            try
+            {
+                string imageUrl = await GetTokenImageUrl(tokenId);
+                
+                if (string.IsNullOrEmpty(imageUrl))
+                {
+                    Debug.LogWarning($"No image URL for token {tokenId}");
+                    return null;
+                }
+                
+                Sprite sprite = await LoadImageSprite(imageUrl);
+                return sprite;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error loading NFT image for token {tokenId}: {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Get image URL from token metadata
+        /// </summary>
+        private async Task<string> GetTokenImageUrl(string tokenId)
+        {
+            try
+            {
+                string uri = await GetTokenURI(tokenId);
+                
+                if (string.IsNullOrEmpty(uri))
+                {
+                    Debug.LogWarning($"Empty URI for token {tokenId}");
+                    return string.Empty;
+                }
+                
+                // Handle IPFS URIs with {id} placeholder
+                if (uri.Contains("{id}"))
+                {
+                    BigInteger tokenIdBigInt = BigInteger.Parse(tokenId);
+                    string hexTokenId = tokenIdBigInt.ToString("X").PadLeft(64, '0');
+                    uri = uri.Replace("{id}", hexTokenId);
+                }
+                
+                // Convert IPFS protocol to HTTP
+                if (uri.StartsWith("ipfs://"))
+                {
+                    uri = uri.Replace("ipfs://", "https://ipfs.io/ipfs/");
+                }
+                
+                // Try multiple IPFS gateways
+                string[] ipfsGateways = new string[] 
+                {
+                    "https://cloudflare-ipfs.com/ipfs/",
+                    "https://dweb.link/ipfs/",
+                    "https://ipfs.io/ipfs/",
+                    "https://gateway.pinata.cloud/ipfs/"
+                };
+                
+                string ipfsHash = uri.Contains("/ipfs/") ? uri.Substring(uri.IndexOf("/ipfs/") + 6) : uri;
+                
+                foreach (var gateway in ipfsGateways)
+                {
+                    try
+                    {
+                        string gatewayUrl = gateway + ipfsHash;
+                        using (var httpClient = new HttpClient())
+                        {
+                            httpClient.Timeout = System.TimeSpan.FromSeconds(10);
+                            string metadataJson = await httpClient.GetStringAsync(gatewayUrl);
+                            
+                            if (!string.IsNullOrEmpty(metadataJson))
+                            {
+                                var metadata = JObject.Parse(metadataJson);
+                                string imageUrl = metadata["image"]?.ToString();
+                                
+                                // Handle IPFS URLs in image field
+                                if (imageUrl != null && imageUrl.StartsWith("ipfs://"))
+                                {
+                                    imageUrl = imageUrl.Replace("ipfs://", "https://ipfs.io/ipfs/");
+                                }
+                                
+                                return imageUrl;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"Gateway {gateway} failed: {ex.Message}");
+                        // Continue to next gateway
+                    }
+                }
+                
+                Debug.LogWarning("All IPFS gateways failed, trying OpenSea fallback");
+                // Fallback: Try OpenSea CDN for token ID 1
+                if (tokenId == "1")
+                {
+                    string contractAddress = m_Contract.ContractAddress.ToLower();
+                    return $"https://i2.seadn.io/base/{contractAddress}/9d8a5d6cf63f705afe582c0a5b3d45/779d8a5d6cf63f705afe582c0a5b3d45.png?w=1000";
+                }
+                
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error getting image URL for token {tokenId}: {ex.Message}");
+                return string.Empty;
+            }
+        }
+        
+        /// <summary>
+        /// Load image as Texture2D from URL
+        /// </summary>
+        private async Task<Texture2D> LoadImageTexture(string imageUrl)
+        {
+            if (string.IsNullOrEmpty(imageUrl))
+                return null;
+                
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    byte[] imageData = await httpClient.GetByteArrayAsync(imageUrl);
+                    
+                    Texture2D texture = new Texture2D(2, 2);
+                    texture.LoadImage(imageData);
+                    
+                    return texture;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error loading image from {imageUrl}: {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Load image as Sprite from URL
+        /// </summary>
+        private async Task<Sprite> LoadImageSprite(string imageUrl)
+        {
+            Texture2D texture = await LoadImageTexture(imageUrl);
+            if (texture == null)
+                return null;
+                
+            return Sprite.Create(
+                texture,
+                new Rect(0, 0, texture.width, texture.height),
+                new UnityEngine.Vector2(0.5f, 0.5f)
+            );
         }
     }
 }

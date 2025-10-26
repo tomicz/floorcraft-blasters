@@ -49,7 +49,9 @@ namespace Matterless.Floorcraft
         // NFT ownership cache
         private readonly Dictionary<string, bool> m_NFTOwnershipCache = new Dictionary<string, bool>();
         private bool m_NFTCacheInitialized = false;
-
+        
+        // Public accessors
+        public ChainSettings chainSettings => m_ChainSettings;
 
         public WalletService(WalletSettings walletSettings, ChainSettings chainSettings)
         {
@@ -433,6 +435,30 @@ namespace Matterless.Floorcraft
             }
             
             return m_NFTOwnershipCache.TryGetValue(tokenId, out bool owned) && owned;
+        }
+        
+        /// <summary>
+        /// Get list of token IDs that are owned by the connected wallet
+        /// </summary>
+        public List<string> GetOwnedTokenIds()
+        {
+            var ownedTokens = new List<string>();
+            foreach (var kvp in m_NFTOwnershipCache)
+            {
+                if (kvp.Value)
+                {
+                    ownedTokens.Add(kvp.Key);
+                }
+            }
+            return ownedTokens;
+        }
+        
+        /// <summary>
+        /// Get count of NFTs owned by the connected wallet
+        /// </summary>
+        public int GetOwnedNFTCount()
+        {
+            return GetOwnedTokenIds().Count;
         }
         
         public async Task<bool> CheckNFTOwnership(string tokenId)

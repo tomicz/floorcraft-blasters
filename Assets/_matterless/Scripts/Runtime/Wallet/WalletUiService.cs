@@ -56,7 +56,7 @@ namespace Matterless.Floorcraft
             m_View.ShowWalletInfo();
         }
 
-        private void OnWalletConnected()
+        private async void OnWalletConnected()
         {
             m_View.SetConnectButtonVisibility(false);
             m_View.SetOpenWalletButtonVisibility(true);
@@ -76,6 +76,16 @@ namespace Matterless.Floorcraft
             m_View.SetOpenWalletButtonInteractability(true);
             
             ShowBalance();
+            
+            // Wait for NFT cache to initialize
+            await System.Threading.Tasks.Task.Delay(2000);
+            
+            // Create NFT containers based on owned NFT count
+            int nftCount = m_WalletService.GetOwnedNFTCount();
+            m_View.InitializeNFTContainers(nftCount);
+            
+            // Load NFT images
+            LoadNFTImages();
         }
 
         private void OnWalletDisconnected()
@@ -85,6 +95,9 @@ namespace Matterless.Floorcraft
 
             // Show wallet disconnected notification
             m_NotificationService.ShowMessage(NotificationType.WalletDisconnected);
+
+            // Clear NFT containers
+            m_View.ClearNFTContainers();
 
             m_View.SetConnectButtonVisibility(true);
             m_View.SetOpenWalletButtonVisibility(false);
@@ -101,6 +114,52 @@ namespace Matterless.Floorcraft
             // Fetch AUKI balance
             string aukiBalance = await m_WalletService.GetAukiBalanceAsync();
             m_View.SetAukiBalanceText(aukiBalance);
+        }
+        
+        private async void LoadNFTImages()
+        {
+            try
+            {
+                var ownedTokenIds = m_WalletService.GetOwnedTokenIds();
+                int nftCount = ownedTokenIds.Count;
+                
+                if (nftCount == 0)
+                {
+                    return;
+                }
+                
+                if (nftCount > m_View.m_InstantiatedContainersPublic.Count)
+                {
+                    Debug.LogWarning($"Wallet owns {nftCount} NFTs but only {m_View.m_InstantiatedContainersPublic.Count} containers available");
+                    nftCount = m_View.m_InstantiatedContainersPublic.Count;
+                }
+                
+                var nftService = new NFTService(m_WalletService.chainSettings.nftContractAddress, m_WalletService.chainSettings.rpcUrl);
+                
+                for (int i = 0; i < nftCount; i++)
+                {
+                    try
+                    {
+                        Sprite sprite = await nftService.LoadNFTImage(ownedTokenIds[i]);
+                        if (sprite != null)
+                        {
+                            m_View.SetNFTImage(i, sprite);
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"Failed to load sprite for token {ownedTokenIds[i]}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"Failed to load NFT image for token {ownedTokenIds[i]}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error loading NFT images: {ex.Message}");
+            }
         }
 
         public void Show()
