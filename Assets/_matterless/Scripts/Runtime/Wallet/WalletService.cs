@@ -40,6 +40,7 @@ namespace Matterless.Floorcraft
         public event Action onWalletConnected;
         public event Action onWalletDisconnected;
         public event Action<bool> onModalStateChanged;
+        public event Action onNFTsLoaded;
 
         private readonly WalletSettings m_WalletSettings;
         private readonly ChainSettings m_ChainSettings;
@@ -375,6 +376,9 @@ namespace Matterless.Floorcraft
                 }
                 
                 m_NFTCacheInitialized = true;
+                
+                // Notify that NFT cache is ready
+                onNFTsLoaded?.Invoke();
             }
             catch (Exception ex)
             {
