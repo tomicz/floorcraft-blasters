@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -23,6 +24,7 @@ namespace Matterless.Floorcraft
         [SerializeField] private TMP_Text m_WalletAddressText;
         [SerializeField] private TMP_Text m_EthBalanceText;
         [SerializeField] private TMP_Text m_AukiBalanceText;
+        [SerializeField] private List<Transform> m_NFTContainerList = new List<Transform>();
 
         public override WalletUiView Init()
         {
@@ -113,6 +115,10 @@ namespace Matterless.Floorcraft
         public void SetAukiBalanceText(string text)
         {
             m_AukiBalanceText.text = text;
+        }
+
+        public void SetNFTImage(int index, Sprite sprite){
+            m_NFTContainerList[index].GetComponentInChildren<Image>().sprite = sprite;
         }
     }
 }
