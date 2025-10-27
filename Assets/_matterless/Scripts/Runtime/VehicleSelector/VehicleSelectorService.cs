@@ -68,10 +68,6 @@ namespace Matterless.Floorcraft
             m_StoreService.onPremiumUnlocked += OnPremiumUnlocked;
             m_Settings = settings;
             m_WalletService = walletService;
-            
-            // Subscribe to NFT loading and wallet disconnect events to refresh ownership state
-            m_WalletService.onNFTsLoaded += OnNFTsLoaded;
-            m_WalletService.onWalletDisconnected += OnWalletDisconnected;
 
             // instantiate vehicles
             m_Vehicles = new List<Transform>();
@@ -111,18 +107,6 @@ namespace Matterless.Floorcraft
 
         private void OnPremiumUnlocked()
         {
-            UpdateView(m_CurrentPage, true);
-        }
-        
-        private void OnNFTsLoaded()
-        {
-            // Refresh view when NFT cache finishes loading
-            UpdateView(m_CurrentPage, true);
-        }
-        
-        private void OnWalletDisconnected()
-        {
-            // Refresh view when wallet disconnects to show vehicles as locked
             UpdateView(m_CurrentPage, true);
         }
         
