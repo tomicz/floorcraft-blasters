@@ -121,6 +121,26 @@ namespace Matterless.Floorcraft
 
         private void ClearDataStructures()
         {
+            // Notify all component services to clear their dictionaries
+            // by triggering OnComponentDeleted for all components
+            // Make a complete snapshot of the dictionary to avoid concurrent modifications
+            var entitiesSnapshot = new Dictionary<uint, Dictionary<uint, IEntityComponentModel>>();
+            foreach (var kvp in m_EntityDictionary)
+            {
+                entitiesSnapshot[kvp.Key] = new Dictionary<uint, IEntityComponentModel>(kvp.Value);
+            }
+            
+            foreach (var entityKvp in entitiesSnapshot)
+            {
+                var entityId = entityKvp.Key;
+                var componentTypes = new List<uint>(entityKvp.Value.Keys);
+                foreach (var typeId in componentTypes)
+                {
+                    var typeName = GetComponentNameById(typeId);
+                    onDeleted?.Invoke(typeName, entityId, false);
+                }
+            }
+            
             m_ComponentTypesMapping.Clear();
             m_EntityDictionary.Clear();
             m_RegisterComponents.Clear();
