@@ -45,6 +45,7 @@ namespace Matterless.Floorcraft
         [SerializeField] private NameComponentService.Settings m_NameTagSettings;
         [SerializeField] private NPCEnemyService.Settings m_NPCEnemyServiceSettings;
         [SerializeField] private MayhemModeService.Settings m_MayhemModeSettings;
+        [SerializeField] private RecordingService.Settings m_RecordingSettings;
         
         [SerializeField] private WorldScaleService.Settings m_WorldScaleSettings;
         
@@ -92,6 +93,7 @@ namespace Matterless.Floorcraft
         public RendererService.Settings rendererSettings => m_RendererSettings;
         public NPCEnemyService.Settings npcEnemyServiceSettings => m_NPCEnemyServiceSettings;
         public MayhemModeService.Settings mayhemModeSettings => m_MayhemModeSettings;
+        public RecordingService.Settings recordingSettings => m_RecordingSettings;
         public WorldScaleService.Settings worldScaleSettings => m_WorldScaleSettings;
         public AudioClip backgroundMusic => m_BackgroundMusic;
         public AudioMixerGroup musicMixerGroup => m_MusicMixerGroup;

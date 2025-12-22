@@ -18,6 +18,7 @@ namespace Matterless.Floorcraft
             container.BindInstance(appConfig.networkServiceSettings);
             container.BindInstance(appConfig.audioUiSettings);
             container.BindInstance(appConfig.rendererSettings);
+            container.BindInstance(appConfig.recordingSettings);
 
             // sevices
             container.Bind<HeaderUiService>();
@@ -31,7 +32,7 @@ namespace Matterless.Floorcraft
             container.Bind<ConnectionIndicatorService>();
             container.Bind<QrCodeUiService>();
             container.Bind<ObstaclesUiService>();
-            container.Bind<IRecordingService, DummyRecordingService>();
+            container.Bind<IRecordingService, RecordingService>();
 
             // this is a mock implementation of IScreenService
             // that locks screen orientation changes

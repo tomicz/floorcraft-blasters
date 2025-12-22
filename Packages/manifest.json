@@ -9,6 +9,7 @@
     "com.matterless.module.audio": "git@github.com:matterless/audio-module.git",
     "com.matterless.module.inject": "git@github.com:matterless/inject-module.git",
     "com.matterless.module.localisation": "git@github.com:matterless/localisation-module.git",
+    "com.matterless.module.nativeshare": "git@github.com:matterless/native-share-module.git",
     "com.reown.appkit.unity": "1.5.1",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.nuget.newtonsoft-json": "3.2.1",
@@ -56,9 +57,7 @@
     {
       "name": "Aukilabs",
       "url": "https://npm.aukiverse.com",
-      "scopes": [
-        "com.aukilabs"
-      ]
+      "scopes": ["com.aukilabs"]
     },
     {
       "name": "package.openupm.com",

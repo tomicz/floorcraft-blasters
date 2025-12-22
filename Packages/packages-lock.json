@@ -94,6 +94,13 @@
       "dependencies": {},
       "hash": "971e3985c5908d59f418d0d90bd83e6015ae7292"
     },
+    "com.matterless.module.nativeshare": {
+      "version": "git@github.com:matterless/native-share-module.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "e17de2f578aeab1a26cce4d7c152cc962bfb5c11"
+    },
     "com.nethereum.unity": {
       "version": "5.0.0",
       "depth": 3,
