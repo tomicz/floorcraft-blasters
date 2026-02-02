@@ -1,11 +1,3 @@
-### Paid plugins (local only)
-Assets/Plugins/AVProMovieCapture/
-Assets/Plugins/AVProMovieCapture.meta
-Assets/Plugins/EffectCore/
-Assets/Plugins/EffectCore.meta
-Assets/Plugins/RenderHeads/
-Assets/Plugins/RenderHeads.meta
-
 ### Unity generated
 /Library/
 /Temp/
