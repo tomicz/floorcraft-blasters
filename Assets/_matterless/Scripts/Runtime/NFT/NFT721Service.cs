@@ -281,6 +281,108 @@ namespace Matterless.Floorcraft
         }
         
         /// <summary>
+        /// Check if the NFT has video content instead of an image
+        /// </summary>
+        /// <param name="tokenId">Token ID</param>
+        /// <returns>True if the NFT content is a video</returns>
+        public async Task<bool> IsVideoNFT(string tokenId)
+        {
+            try
+            {
+                string imageUrl = await GetTokenImageUrl(tokenId);
+                
+                if (string.IsNullOrEmpty(imageUrl))
+                {
+                    // No image URL found - check if there's animation_url
+                    string uri = await GetTokenURI(tokenId);
+                    if (!string.IsNullOrEmpty(uri))
+                    {
+                        string metadataUrl = uri.StartsWith("ipfs://") 
+                            ? uri.Replace("ipfs://", "https://ipfs.io/ipfs/") 
+                            : uri;
+                        
+                        using (var httpClient = new HttpClient())
+                        {
+                            httpClient.Timeout = TimeSpan.FromSeconds(10);
+                            string metadataJson = await httpClient.GetStringAsync(metadataUrl);
+                            
+                            if (!string.IsNullOrEmpty(metadataJson))
+                            {
+                                var metadata = JObject.Parse(metadataJson);
+                                string animationUrl = metadata["animation_url"]?.ToString();
+                                if (!string.IsNullOrEmpty(animationUrl))
+                                {
+                                    return true; // Has animation_url, likely video
+                                }
+                            }
+                        }
+                    }
+                    return false;
+                }
+                
+                // Check if the image URL points to a video file
+                string lowerUrl = imageUrl.ToLower();
+                return lowerUrl.EndsWith(".mp4") || 
+                       lowerUrl.EndsWith(".webm") || 
+                       lowerUrl.EndsWith(".mov") ||
+                       lowerUrl.EndsWith(".avi") ||
+                       lowerUrl.Contains("video");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[NFT721Service] Error checking if video NFT for token {tokenId}: {ex.Message}");
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// Get NFT name from metadata
+        /// </summary>
+        /// <param name="tokenId">Token ID</param>
+        /// <returns>NFT name from metadata, or token ID if not found</returns>
+        public async Task<string> GetNFTName(string tokenId)
+        {
+            try
+            {
+                string uri = await GetTokenURI(tokenId);
+                
+                if (string.IsNullOrEmpty(uri))
+                {
+                    return $"NFT #{tokenId}";
+                }
+                
+                // Convert IPFS protocol to HTTP gateway
+                string metadataUrl = uri.StartsWith("ipfs://") 
+                    ? uri.Replace("ipfs://", "https://ipfs.io/ipfs/") 
+                    : uri;
+                
+                using (var httpClient = new HttpClient())
+                {
+                    httpClient.Timeout = TimeSpan.FromSeconds(10);
+                    string metadataJson = await httpClient.GetStringAsync(metadataUrl);
+                    
+                    if (!string.IsNullOrEmpty(metadataJson))
+                    {
+                        var metadata = JObject.Parse(metadataJson);
+                        string name = metadata["name"]?.ToString();
+                        
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            return name;
+                        }
+                    }
+                }
+                
+                return $"NFT #{tokenId}";
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[NFT721Service] Error getting NFT name for token {tokenId}: {ex.Message}");
+                return $"NFT #{tokenId}";
+            }
+        }
+        
+        /// <summary>
         /// Load image as Texture2D from URL
         /// </summary>
         private async Task<Texture2D> LoadImageTexture(string imageUrl)

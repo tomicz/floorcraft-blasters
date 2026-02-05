@@ -14,8 +14,11 @@ namespace Matterless.Floorcraft
         private readonly INotificationService m_NotificationService;
         private readonly WalletUiView m_View;
         
-        // NFT sprite cache - key is token ID, value is sprite
+        // NFT sprite cache - key is token ID, value is sprite (null for video NFTs)
         private readonly Dictionary<string, Sprite> m_NFTSpriteCache = new Dictionary<string, Sprite>();
+        
+        // NFT name cache - key is token ID, value is name (for video NFTs that can't display images)
+        private readonly Dictionary<string, string> m_NFTNameCache = new Dictionary<string, string>();
 
         public WalletUiService(WalletService walletService, AudioUiService audioUiService, IAnalyticsService analyticsService, INotificationService notificationService)
         {
@@ -103,9 +106,10 @@ namespace Matterless.Floorcraft
             // Show wallet disconnected notification
             m_NotificationService.ShowMessage(NotificationType.WalletDisconnected);
 
-            // Clear NFT containers and cache
+            // Clear NFT containers and caches
             m_View.ClearNFTContainers();
             m_NFTSpriteCache.Clear();
+            m_NFTNameCache.Clear();
 
             m_View.SetConnectButtonVisibility(true);
             m_View.SetOpenWalletButtonVisibility(false);
@@ -136,7 +140,8 @@ namespace Matterless.Floorcraft
                     return;
                 }
                 
-                var nftService = new NFTService(m_WalletService.chainSettings.nftContractAddress, m_WalletService.chainSettings.rpcUrl);
+                // Use ERC-721 service for Floorcraft NFTs
+                var nftService = new NFT721Service(m_WalletService.chainSettings.nft721ContractAddress, m_WalletService.chainSettings.rpcUrl);
                 
                 for (int i = 0; i < ownedTokenIds.Count; i++)
                 {
@@ -144,31 +149,48 @@ namespace Matterless.Floorcraft
                     {
                         string tokenId = ownedTokenIds[i];
                         
-                        // Check if already cached
-                        if (m_NFTSpriteCache.ContainsKey(tokenId))
+                        // Check if already cached (either as sprite or name)
+                        if (m_NFTSpriteCache.ContainsKey(tokenId) || m_NFTNameCache.ContainsKey(tokenId))
                         {
                             Debug.Log($"Token {tokenId} already cached, skipping download");
                             continue;
                         }
                         
-                        Sprite sprite = await nftService.LoadNFTImage(tokenId);
-                        if (sprite != null)
+                        // Check if this is a video NFT
+                        bool isVideo = await nftService.IsVideoNFT(tokenId);
+                        
+                        if (isVideo)
                         {
-                            // Store in cache
-                            m_NFTSpriteCache[tokenId] = sprite;
+                            // Video NFT - get the name to display as text
+                            string nftName = await nftService.GetNFTName(tokenId);
+                            m_NFTNameCache[tokenId] = nftName;
+                            Debug.Log($"Token {tokenId} is video NFT, cached name: {nftName}");
                         }
                         else
                         {
-                            Debug.LogWarning($"Failed to load sprite for token {tokenId}");
+                            // Image NFT - load the sprite
+                            Sprite sprite = await nftService.LoadNFTImage(tokenId);
+                            if (sprite != null)
+                            {
+                                // Store in cache
+                                m_NFTSpriteCache[tokenId] = sprite;
+                            }
+                            else
+                            {
+                                // Fallback: if image fails to load, get name instead
+                                string nftName = await nftService.GetNFTName(tokenId);
+                                m_NFTNameCache[tokenId] = nftName;
+                                Debug.LogWarning($"Failed to load sprite for token {tokenId}, using name: {nftName}");
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogError($"Failed to load NFT image for token {ownedTokenIds[i]}: {ex.Message}");
+                        Debug.LogError($"Failed to load NFT data for token {ownedTokenIds[i]}: {ex.Message}");
                     }
                 }
                 
-                // Display cached images after download completes
+                // Display cached images/names after download completes
                 DisplayCachedNFTImages();
             }
             catch (Exception ex)
@@ -178,7 +200,7 @@ namespace Matterless.Floorcraft
         }
         
         /// <summary>
-        /// Display cached NFT images in containers
+        /// Display cached NFT images or names in containers
         /// </summary>
         private void DisplayCachedNFTImages()
         {
@@ -197,20 +219,25 @@ namespace Matterless.Floorcraft
                 {
                     string tokenId = ownedTokenIds[i];
                     
-                    // Check if sprite is cached
+                    // Check if sprite is cached (image NFT)
                     if (m_NFTSpriteCache.TryGetValue(tokenId, out Sprite sprite))
                     {
                         m_View.SetNFTImage(i, sprite);
                     }
+                    // Check if name is cached (video NFT or failed image load)
+                    else if (m_NFTNameCache.TryGetValue(tokenId, out string nftName))
+                    {
+                        m_View.SetNFTText(i, nftName);
+                    }
                     else
                     {
-                        Debug.LogWarning($"No cached sprite for token {tokenId}");
+                        Debug.LogWarning($"No cached data for token {tokenId}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error displaying cached NFT images: {ex.Message}");
+                Debug.LogError($"Error displaying cached NFT data: {ex.Message}");
             }
         }
 
