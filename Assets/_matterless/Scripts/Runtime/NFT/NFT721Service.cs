@@ -58,6 +58,26 @@ namespace Matterless.Floorcraft
         }
         
         /// <summary>
+        /// Check if an address owns ANY token from this collection.
+        /// This is the preferred method for ERC-721 gated content.
+        /// </summary>
+        /// <param name="ownerAddress">Wallet address to check</param>
+        /// <returns>True if owner owns at least one NFT from this collection</returns>
+        public async Task<bool> OwnsAnyToken(string ownerAddress)
+        {
+            try
+            {
+                var balance = await m_Contract.BalanceOf(ownerAddress);
+                return balance > 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[NFT721Service] Error checking if owns any token: {ex.Message}");
+                return false;
+            }
+        }
+        
+        /// <summary>
         /// Get the number of NFTs owned by an address
         /// </summary>
         /// <param name="ownerAddress">Wallet address to check</param>

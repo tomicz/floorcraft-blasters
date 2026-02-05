@@ -51,6 +51,9 @@ namespace Matterless.Floorcraft
         private readonly Dictionary<string, bool> m_NFTOwnershipCache = new Dictionary<string, bool>();
         private bool m_NFTCacheInitialized = false;
         
+        // ERC-721: Cache whether user owns ANY token from the collection
+        private bool m_OwnsAnyNFT = false;
+        
         // Public accessors
         public ChainSettings chainSettings => m_ChainSettings;
 
@@ -127,13 +130,12 @@ namespace Matterless.Floorcraft
 
         private async void OnAccountConnected(object sender, Connector.AccountConnectedEventArgs e)
         {
-            string address = e.Account.Address;
-
             onWalletConnected?.Invoke();
             
             // Clear cache and reinitialize for new wallet
             m_NFTOwnershipCache.Clear();
             m_NFTCacheInitialized = false;
+            m_OwnsAnyNFT = false;
             await InitializeNFTCache();
         }
 
@@ -155,6 +157,7 @@ namespace Matterless.Floorcraft
             // Clear NFT cache when wallet disconnects
             m_NFTOwnershipCache.Clear();
             m_NFTCacheInitialized = false;
+            m_OwnsAnyNFT = false;
             
             onWalletDisconnected?.Invoke();
         }
@@ -357,24 +360,11 @@ namespace Matterless.Floorcraft
                 
             try
             {
-                // Get vehicle token IDs from the vehicle selector settings
-                var vehicleTokenIds = GetVehicleTokenIds();
-                
                 // Using ERC-721 service for Floorcraft NFTs
                 var nft721Service = new NFT721Service(m_ChainSettings.nft721ContractAddress, m_ChainSettings.rpcUrl);
                 
-                foreach (string tokenId in vehicleTokenIds)
-                {
-                    try
-                    {
-                        bool ownsToken = await nft721Service.OwnsToken(AppKit.Account.Address, tokenId);
-                        m_NFTOwnershipCache[tokenId] = ownsToken;
-                    }
-                    catch (Exception ex)
-                    {
-                        m_NFTOwnershipCache[tokenId] = false;
-                    }
-                }
+                // For ERC-721: Just check if the wallet owns ANY token from the collection
+                m_OwnsAnyNFT = await nft721Service.OwnsAnyToken(AppKit.Account.Address);
                 
                 m_NFTCacheInitialized = true;
                 
@@ -384,6 +374,7 @@ namespace Matterless.Floorcraft
             catch (Exception ex)
             {
                 Debug.LogError($"Failed to initialize NFT cache: {ex.Message}");
+                m_OwnsAnyNFT = false;
             }
         }
         
@@ -432,6 +423,12 @@ namespace Matterless.Floorcraft
             return tokenIds;
         }
         
+        /// <summary>
+        /// Check if the connected wallet owns any NFT from the Floorcraft collection.
+        /// For ERC-721, we check balance > 0, so tokenId parameter is ignored.
+        /// </summary>
+        /// <param name="tokenId">Ignored for ERC-721 (kept for API compatibility)</param>
+        /// <returns>True if wallet owns any Floorcraft NFT</returns>
         public bool IsNFTOwned(string tokenId)
         {
             if (!m_NFTCacheInitialized)
@@ -439,7 +436,9 @@ namespace Matterless.Floorcraft
                 return false;
             }
             
-            return m_NFTOwnershipCache.TryGetValue(tokenId, out bool owned) && owned;
+            // For ERC-721: Return whether user owns ANY token from the collection
+            // The tokenId parameter is ignored - any Floorcraft NFT unlocks NFT-gated vehicles
+            return m_OwnsAnyNFT;
         }
         
         /// <summary>
@@ -466,6 +465,12 @@ namespace Matterless.Floorcraft
             return GetOwnedTokenIds().Count;
         }
         
+        /// <summary>
+        /// Check if wallet owns any NFT from the Floorcraft collection.
+        /// For ERC-721, we check balance > 0, so tokenId parameter is ignored.
+        /// </summary>
+        /// <param name="tokenId">Ignored for ERC-721 (kept for API compatibility)</param>
+        /// <returns>True if wallet owns any Floorcraft NFT</returns>
         public async Task<bool> CheckNFTOwnership(string tokenId)
         {
             if (!AppKit.IsAccountConnected)
@@ -479,10 +484,10 @@ namespace Matterless.Floorcraft
                 // Using ERC-721 service for Floorcraft NFTs
                 var nft721Service = new NFT721Service(m_ChainSettings.nft721ContractAddress, m_ChainSettings.rpcUrl);
                 
-                // Check if user owns the token
-                bool ownsToken = await nft721Service.OwnsToken(AppKit.Account.Address, tokenId);
+                // For ERC-721: Check if user owns ANY token from the collection
+                bool ownsAny = await nft721Service.OwnsAnyToken(AppKit.Account.Address);
                 
-                return ownsToken;
+                return ownsAny;
             }
             catch (System.Exception ex)
             {
