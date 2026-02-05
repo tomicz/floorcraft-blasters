@@ -360,13 +360,14 @@ namespace Matterless.Floorcraft
                 // Get vehicle token IDs from the vehicle selector settings
                 var vehicleTokenIds = GetVehicleTokenIds();
                 
-                var nftService = new NFTService(m_ChainSettings.nftContractAddress, m_ChainSettings.rpcUrl);
+                // Using ERC-721 service for Floorcraft NFTs
+                var nft721Service = new NFT721Service(m_ChainSettings.nft721ContractAddress, m_ChainSettings.rpcUrl);
                 
                 foreach (string tokenId in vehicleTokenIds)
                 {
                     try
                     {
-                        bool ownsToken = await nftService.OwnsToken(AppKit.Account.Address, tokenId);
+                        bool ownsToken = await nft721Service.OwnsToken(AppKit.Account.Address, tokenId);
                         m_NFTOwnershipCache[tokenId] = ownsToken;
                     }
                     catch (Exception ex)
@@ -475,17 +476,17 @@ namespace Matterless.Floorcraft
 
             try
             {
-                // Create NFTService instance for ERC-1155
-                var nftService = new NFTService(m_ChainSettings.nftContractAddress, m_ChainSettings.rpcUrl);
-                
+                // Using ERC-721 service for Floorcraft NFTs
+                var nft721Service = new NFT721Service(m_ChainSettings.nft721ContractAddress, m_ChainSettings.rpcUrl);
                 
                 // Check if user owns the token
-                bool ownsToken = await nftService.OwnsToken(AppKit.Account.Address, tokenId);
+                bool ownsToken = await nft721Service.OwnsToken(AppKit.Account.Address, tokenId);
                 
                 return ownsToken;
             }
             catch (System.Exception ex)
             {
+                Debug.LogError($"Error checking NFT ownership: {ex.Message}");
                 return false;
             }
         }
