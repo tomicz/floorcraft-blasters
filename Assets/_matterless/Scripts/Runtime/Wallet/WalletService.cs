@@ -51,8 +51,15 @@ namespace Matterless.Floorcraft
         private readonly Dictionary<string, bool> m_NFTOwnershipCache = new Dictionary<string, bool>();
         private bool m_NFTCacheInitialized = false;
         
-        // ERC-721: Cache whether user owns ANY token from the collection
-        private bool m_OwnsAnyNFT = false;
+        // ERC-1155 (Active): Cache whether user owns the specific Auki Domain NFT token
+        private bool m_OwnsErc1155NFT = false;
+        
+        // ERC-721 (Secondary): Cache whether user owns ANY Floorcraft NFT from the collection
+        private bool m_OwnsErc721NFT = false;
+        
+        // Track owned token IDs from each standard
+        private readonly List<string> m_OwnedErc1155TokenIds = new List<string>();
+        private readonly List<string> m_OwnedErc721TokenIds = new List<string>();
         
         // Public accessors
         public ChainSettings chainSettings => m_ChainSettings;
@@ -130,12 +137,17 @@ namespace Matterless.Floorcraft
 
         private async void OnAccountConnected(object sender, Connector.AccountConnectedEventArgs e)
         {
-            onWalletConnected?.Invoke();
-            
-            // Clear cache and reinitialize for new wallet
+            // Clear cache BEFORE notifying listeners
             m_NFTOwnershipCache.Clear();
             m_NFTCacheInitialized = false;
-            m_OwnsAnyNFT = false;
+            m_OwnsErc1155NFT = false;
+            m_OwnsErc721NFT = false;
+            m_OwnedErc1155TokenIds.Clear();
+            m_OwnedErc721TokenIds.Clear();
+            
+            onWalletConnected?.Invoke();
+            
+            // Initialize NFT cache (will fire onNFTsLoaded when complete)
             await InitializeNFTCache();
         }
 
@@ -157,7 +169,10 @@ namespace Matterless.Floorcraft
             // Clear NFT cache when wallet disconnects
             m_NFTOwnershipCache.Clear();
             m_NFTCacheInitialized = false;
-            m_OwnsAnyNFT = false;
+            m_OwnsErc1155NFT = false;
+            m_OwnsErc721NFT = false;
+            m_OwnedErc1155TokenIds.Clear();
+            m_OwnedErc721TokenIds.Clear();
             
             onWalletDisconnected?.Invoke();
         }
@@ -358,24 +373,56 @@ namespace Matterless.Floorcraft
             if (m_NFTCacheInitialized || !AppKit.IsAccountConnected)
                 return;
                 
+            string walletAddress = AppKit.Account.Address;
+            
+            // === ERC-1155 (Active/Primary) ===
             try
             {
-                // Using ERC-721 service for Floorcraft NFTs
-                var nft721Service = new NFT721Service(m_ChainSettings.nft721ContractAddress, m_ChainSettings.rpcUrl);
+                var nft1155Service = new NFTService(m_ChainSettings.nftContractAddress, m_ChainSettings.rpcUrl);
+                string tokenId = m_ChainSettings.nft1155TokenId;
                 
-                // For ERC-721: Just check if the wallet owns ANY token from the collection
-                m_OwnsAnyNFT = await nft721Service.OwnsAnyToken(AppKit.Account.Address);
+                // Check if the wallet owns the specific ERC-1155 token
+                m_OwnsErc1155NFT = await nft1155Service.OwnsToken(walletAddress, tokenId);
                 
-                m_NFTCacheInitialized = true;
-                
-                // Notify that NFT cache is ready
-                onNFTsLoaded?.Invoke();
+                if (m_OwnsErc1155NFT)
+                {
+                    m_OwnedErc1155TokenIds.Add(tokenId);
+                }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Failed to initialize NFT cache: {ex.Message}");
-                m_OwnsAnyNFT = false;
+                Debug.LogError($"Failed to check ERC-1155 ownership: {ex.Message}");
+                m_OwnsErc1155NFT = false;
             }
+            
+            // === ERC-721 (Secondary) ===
+            try
+            {
+                if (m_ChainSettings.IsERC721Configured())
+                {
+                    var nft721Service = new NFT721Service(m_ChainSettings.nft721ContractAddress, m_ChainSettings.rpcUrl);
+                    
+                    // Check if the wallet owns ANY token from the Floorcraft collection
+                    m_OwnsErc721NFT = await nft721Service.OwnsAnyToken(walletAddress);
+                    
+                    if (m_OwnsErc721NFT)
+                    {
+                        // Try to get specific owned token IDs (requires ERC721Enumerable)
+                        var ownedIds = await nft721Service.GetOwnedTokenIds(walletAddress);
+                        m_OwnedErc721TokenIds.AddRange(ownedIds);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to check ERC-721 ownership: {ex.Message}");
+                m_OwnsErc721NFT = false;
+            }
+            
+            m_NFTCacheInitialized = true;
+            
+            // Notify that NFT cache is ready
+            onNFTsLoaded?.Invoke();
         }
         
         private List<string> GetVehicleTokenIds()
@@ -424,11 +471,11 @@ namespace Matterless.Floorcraft
         }
         
         /// <summary>
-        /// Check if the connected wallet owns any NFT from the Floorcraft collection.
-        /// For ERC-721, we check balance > 0, so tokenId parameter is ignored.
+        /// Check if the connected wallet owns any NFT (ERC-1155 or ERC-721).
+        /// ERC-1155 is checked first (primary), then ERC-721 (secondary).
         /// </summary>
-        /// <param name="tokenId">Ignored for ERC-721 (kept for API compatibility)</param>
-        /// <returns>True if wallet owns any Floorcraft NFT</returns>
+        /// <param name="tokenId">Token ID (used for ERC-1155 specific checks, ignored for general gating)</param>
+        /// <returns>True if wallet owns any supported NFT</returns>
         public bool IsNFTOwned(string tokenId)
         {
             if (!m_NFTCacheInitialized)
@@ -436,41 +483,50 @@ namespace Matterless.Floorcraft
                 return false;
             }
             
-            // For ERC-721: Return whether user owns ANY token from the collection
-            // The tokenId parameter is ignored - any Floorcraft NFT unlocks NFT-gated vehicles
-            return m_OwnsAnyNFT;
+            // ERC-1155 (primary) OR ERC-721 (secondary) ownership unlocks NFT-gated content
+            return m_OwnsErc1155NFT || m_OwnsErc721NFT;
         }
         
         /// <summary>
-        /// Get list of token IDs that are owned by the connected wallet
+        /// Get combined list of all owned token IDs (ERC-1155 first, then ERC-721)
         /// </summary>
         public List<string> GetOwnedTokenIds()
         {
-            var ownedTokens = new List<string>();
-            foreach (var kvp in m_NFTOwnershipCache)
-            {
-                if (kvp.Value)
-                {
-                    ownedTokens.Add(kvp.Key);
-                }
-            }
-            return ownedTokens;
+            var allOwned = new List<string>();
+            allOwned.AddRange(m_OwnedErc1155TokenIds);
+            allOwned.AddRange(m_OwnedErc721TokenIds);
+            return allOwned;
         }
         
         /// <summary>
-        /// Get count of NFTs owned by the connected wallet
+        /// Get list of owned ERC-1155 token IDs
+        /// </summary>
+        public List<string> GetOwnedErc1155TokenIds()
+        {
+            return new List<string>(m_OwnedErc1155TokenIds);
+        }
+        
+        /// <summary>
+        /// Get list of owned ERC-721 token IDs
+        /// </summary>
+        public List<string> GetOwnedErc721TokenIds()
+        {
+            return new List<string>(m_OwnedErc721TokenIds);
+        }
+        
+        /// <summary>
+        /// Get total count of NFTs owned by the connected wallet (both standards)
         /// </summary>
         public int GetOwnedNFTCount()
         {
-            return GetOwnedTokenIds().Count;
+            return m_OwnedErc1155TokenIds.Count + m_OwnedErc721TokenIds.Count;
         }
         
         /// <summary>
-        /// Check if wallet owns any NFT from the Floorcraft collection.
-        /// For ERC-721, we check balance > 0, so tokenId parameter is ignored.
+        /// Check if wallet owns any NFT (ERC-1155 primary, ERC-721 secondary).
         /// </summary>
-        /// <param name="tokenId">Ignored for ERC-721 (kept for API compatibility)</param>
-        /// <returns>True if wallet owns any Floorcraft NFT</returns>
+        /// <param name="tokenId">Token ID for ERC-1155 check</param>
+        /// <returns>True if wallet owns any supported NFT</returns>
         public async Task<bool> CheckNFTOwnership(string tokenId)
         {
             if (!AppKit.IsAccountConnected)
@@ -481,13 +537,22 @@ namespace Matterless.Floorcraft
 
             try
             {
-                // Using ERC-721 service for Floorcraft NFTs
-                var nft721Service = new NFT721Service(m_ChainSettings.nft721ContractAddress, m_ChainSettings.rpcUrl);
+                // Check ERC-1155 first (primary)
+                var nft1155Service = new NFTService(m_ChainSettings.nftContractAddress, m_ChainSettings.rpcUrl);
+                bool owns1155 = await nft1155Service.OwnsToken(AppKit.Account.Address, m_ChainSettings.nft1155TokenId);
                 
-                // For ERC-721: Check if user owns ANY token from the collection
-                bool ownsAny = await nft721Service.OwnsAnyToken(AppKit.Account.Address);
+                if (owns1155)
+                    return true;
                 
-                return ownsAny;
+                // Fallback to ERC-721 (secondary)
+                if (m_ChainSettings.IsERC721Configured())
+                {
+                    var nft721Service = new NFT721Service(m_ChainSettings.nft721ContractAddress, m_ChainSettings.rpcUrl);
+                    bool owns721 = await nft721Service.OwnsAnyToken(AppKit.Account.Address);
+                    return owns721;
+                }
+                
+                return false;
             }
             catch (System.Exception ex)
             {
