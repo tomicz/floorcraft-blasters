@@ -56,5 +56,13 @@ namespace Matterless.Floorcraft
         {
             m_View.HideButton();
         }
+
+        /// <summary>
+        /// Fully hide the Mayhem UI view (e.g. when leaving Gameplay so it doesn't stay on screen in Spawning/Intro).
+        /// </summary>
+        public void Hide()
+        {
+            m_View.Hide();
+        }
     }
 }

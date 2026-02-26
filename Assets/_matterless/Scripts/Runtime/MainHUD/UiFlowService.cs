@@ -339,6 +339,7 @@ namespace Matterless.Floorcraft
         private void GameplayOnExit()
         {
             m_MayhemUiService.HideButton();
+            m_MayhemUiService.Hide();
             m_HeaderUiService.HideHorizontalView();
             m_LeaderboardService.SetOrientation(ScreenOrientation.Portrait);
             m_SidebarUiService.SetOrientation(ScreenOrientation.Portrait);
