@@ -37,6 +37,7 @@ namespace Matterless.Floorcraft
         private Action m_OnSpectatorMode;
         private bool m_CanSpawn;
         private bool m_LastCanSpawn;
+        private bool m_LastCanShowGroundMarker;
         private string m_DisconnectedLabel;
         private string m_YouAreDisconnectedMessage;
         private string m_ScanningLabel;
@@ -157,6 +158,7 @@ namespace Matterless.Floorcraft
             // init these for tick update
             m_CanSpawn = false;
             m_LastCanSpawn = false;
+            m_LastCanShowGroundMarker = false;
             // show marker
             m_MarkerTypeService.SetType(MarkerType.Tip);
             //m_ObstaclesUiService.ShowButton();
@@ -267,27 +269,38 @@ namespace Matterless.Floorcraft
                 m_CanSpawn = m_ObstacleService.HasSpawnedObstacles;
             }
 
-            if (m_ViewIsActive && m_CanSpawn && !m_LastCanSpawn)
+            // In Mayhem, show the ground marker (tip) as soon as we have a raycast hit so the user can see where to place the tower.
+            // In other modes, only show the marker when they can actually spawn (m_CanSpawn).
+            bool canShowGroundMarker = m_GameMode == GameMode.Mayhem
+                ? (m_RaycastService.hasHit && m_AukiWrapper.isConnected)
+                : m_CanSpawn;
+
+#if UNITY_EDITOR
+            // in editor we don't have to check for raycast
+            m_CanSpawn = m_AukiWrapper.isConnected;
+            if (m_GameMode == GameMode.Mayhem)
+                m_CanSpawn = m_ObstacleService.HasSpawnedObstacles;
+            canShowGroundMarker = m_GameMode == GameMode.Mayhem ? m_AukiWrapper.isConnected : m_CanSpawn;
+#endif
+
+            if (m_ViewIsActive && canShowGroundMarker && !m_LastCanShowGroundMarker)
             {
                 if (m_MarkerService.isHidden)
                 {
                     m_MarkerService.Show();
                 }
             }
-            if (m_ViewIsActive && !m_CanSpawn && m_LastCanSpawn)
+            if (m_ViewIsActive && !canShowGroundMarker && m_LastCanShowGroundMarker)
             {
                 if (!m_MarkerService.isHidden)
                 {
                     m_MarkerService.Hide();
                 }
             }
-            
-#if UNITY_EDITOR
-            // in editor we don't have to check for raycast
-            m_CanSpawn = m_AukiWrapper.isConnected;
-#endif
+
             m_View.UpdateScanningStatus(m_CanSpawn, m_RaycastService.hasHit, m_AukiWrapper.isConnected, m_ScanningLabel, m_LookAroundMessage, m_DisconnectedLabel);
             m_LastCanSpawn = m_CanSpawn;
+            m_LastCanShowGroundMarker = canShowGroundMarker;
         }
     }
 }
