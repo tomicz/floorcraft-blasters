@@ -45,9 +45,22 @@ namespace Matterless.Floorcraft
             // Hide by default - will be shown by UiFlowService when in Intro state
             m_View.Hide();
 
-            // Set initial state (show connect button, hide open wallet button, hide wallet info)
-            m_View.SetConnectButtonVisibility(true);
-            m_View.SetOpenWalletButtonVisibility(false);
+            if (m_WalletService.hasCachedSession)
+            {
+                m_View.SetConnectButtonVisibility(false);
+                m_View.SetOpenWalletButtonVisibility(true);
+                m_View.SetWalletAddress(m_WalletService.cachedWalletAddress);
+                m_View.SetOpenWalletButtonInteractability(true);
+                
+                int nftCount = m_WalletService.GetOwnedNFTCount();
+                m_View.InitializeNFTContainers(nftCount);
+                LoadNFTImages();
+            }
+            else
+            {
+                m_View.SetConnectButtonVisibility(true);
+                m_View.SetOpenWalletButtonVisibility(false);
+            }
         }
 
         private void OnConnectWalletButtonClicked()
@@ -108,17 +121,14 @@ namespace Matterless.Floorcraft
 
         private void OnWalletDisconnected()
         {
-            // Track wallet disconnection for user analytics
             m_AnalyticsService.ClearWalletAddress();
-
-            // Show wallet disconnected notification
             m_NotificationService.ShowMessage(NotificationType.WalletDisconnected);
 
-            // Clear NFT containers and caches
             m_View.ClearNFTContainers();
             m_NFTSpriteCache.Clear();
             m_NFTNameCache.Clear();
 
+            m_View.HideWalletInfo();
             m_View.SetConnectButtonVisibility(true);
             m_View.SetOpenWalletButtonVisibility(false);
             m_View.SetConnectButtonInteractability(true);
@@ -311,14 +321,9 @@ namespace Matterless.Floorcraft
 
         private void OnDisconnectWalletButtonClicked()
         {
-            // Disconnect wallet and hide wallet info container
             m_AudioUiService.PlaySelectSound();
-            
-            // Disable open wallet button during disconnection process
-            m_View.SetOpenWalletButtonInteractability(false);
-            
-            m_WalletService.Disconnect();
             m_View.HideWalletInfo();
+            m_WalletService.Disconnect();
         }
 
         private void OnModalStateChanged(bool isOpen)
