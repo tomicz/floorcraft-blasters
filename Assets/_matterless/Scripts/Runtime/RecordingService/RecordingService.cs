@@ -8,6 +8,9 @@ using Object = UnityEngine.Object;
 using Matterless.Audio;
 using Matterless.UTools;
 using UnityEngine.Rendering;
+#if UNITY_ANDROID && !UNITY_EDITOR
+using UnityEngine.Android;
+#endif
 
 namespace Matterless.Floorcraft
 {
@@ -103,11 +106,34 @@ namespace Matterless.Floorcraft
                 return;
             }
             
-            if (!m_CaptureFromCamera.IsCapturing())
+            if (m_CaptureFromCamera.IsCapturing())
             {
-                StartCapture();
-                m_AnalyticsService.StartRecording();
+                return;
             }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+            // AVPro captures audio through its own native path rather than Unity's Microphone class,
+            // so the runtime permission must be requested explicitly (AVPro Movie Capture Android guide).
+            if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
+            {
+                var callbacks = new PermissionCallbacks();
+                callbacks.PermissionGranted += _ => BeginRecording();
+                callbacks.PermissionDenied += _ => Debug.LogWarning("[RecordingService] Microphone permission denied; recording cancelled.");
+                Permission.RequestUserPermission(Permission.Microphone, callbacks);
+                return;
+            }
+#endif
+            BeginRecording();
+        }
+
+        private void BeginRecording()
+        {
+            if (m_CaptureFromCamera == null || m_CaptureFromCamera.IsCapturing())
+            {
+                return;
+            }
+            StartCapture();
+            m_AnalyticsService.StartRecording();
         }
 
         public void StopRecording()
