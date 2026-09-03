@@ -67,3 +67,7 @@ mono_crash.*.json
 .env
 /Assets/_matterless/Resources/AppSecrets.asset
 /Assets/_matterless/Resources/AppSecrets.asset.meta
+
+# Android signing keys
+*.keystore
+*.jks
