@@ -14,6 +14,14 @@ A multiplayer augmented reality racing game built with Unity, featuring real-tim
   - Join Session - Multiplayer via QR code
   - Mayhem Mode - PvE with AI enemies
 
+## Paid Assets (optional)
+
+The official builds use two paid assets that are not included here: AVPro Movie
+Capture (video recording) and the EffectCore explosion pack (particle materials).
+The project compiles and runs without them; recording is disabled and the
+affected particles show missing materials. Licensed developers can install them
+with `tools/paid-assets.sh install`. See [Docs/PaidAssets.md](Docs/PaidAssets.md).
+
 ## Getting Started
 
 ### Prerequisites

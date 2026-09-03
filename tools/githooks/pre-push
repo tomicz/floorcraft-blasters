@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+#
+# Pre-push guard: refuse to push any commit that adds, modifies, or still
+# contains the paid assets. Installed by tools/paid-assets.sh; can also be
+# run by hand as: tools/githooks/pre-push --range <rev-list args>
+#
+set -u
+
+PAID_PATHS=(
+    "Assets/Plugins/RenderHeads"
+    "Assets/Plugins/RenderHeads.meta"
+    "Assets/Plugins/EffectCore"
+    "Assets/Plugins/EffectCore.meta"
+    "Assets/_matterless/Scripts/Runtime/csc.rsp"
+)
+ZERO=0000000000000000000000000000000000000000
+failed=0
+
+show_first() {  # print at most $1 lines of stdin, indented
+    local n="$1" i=0 line
+    while IFS= read -r line; do
+        i=$((i + 1))
+        if [ "$i" -le "$n" ]; then printf '   %s\n' "$line" >&2; fi
+    done
+    if [ "$i" -gt "$n" ]; then printf '   ... and %d more\n' $((i - n)) >&2; fi
+}
+
+scan() {
+    # $1 = tip commit, remaining args = rev-list range arguments
+    local tip="$1"; shift
+    local hits
+    hits="$(git ls-tree -r --name-only "$tip" -- "${PAID_PATHS[@]}" 2>/dev/null)"
+    if [ -n "$hits" ]; then
+        echo "REFUSED: commit ${tip:0:10} still contains paid assets:" >&2
+        printf '%s\n' "$hits" | show_first 5
+        failed=1
+    fi
+    hits="$(git log --format='%h %s' "$@" -- "${PAID_PATHS[@]}" 2>/dev/null)"
+    if [ -n "$hits" ]; then
+        echo "REFUSED: these commits touch paid assets:" >&2
+        printf '%s\n' "$hits" | show_first 10
+        failed=1
+    fi
+}
+
+if [ "${1:-}" = "--range" ]; then
+    shift
+    tip="$(git rev-parse "${1:-HEAD}")" || exit 1
+    scan "$tip" "$@"
+else
+    # git passes: <local ref> <local sha> <remote ref> <remote sha> per line on stdin
+    while read -r local_ref local_sha remote_ref remote_sha; do
+        [ "$local_sha" = "$ZERO" ] && continue
+        if [ "$remote_sha" = "$ZERO" ]; then
+            scan "$local_sha" "$local_sha" --not --remotes
+        else
+            scan "$local_sha" "$remote_sha..$local_sha"
+        fi
+    done
+fi
+
+if [ "$failed" -ne 0 ]; then
+    echo "Paid assets must never be pushed. See Docs/PaidAssets.md." >&2
+    exit 1
+fi
+exit 0
