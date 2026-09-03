@@ -10,13 +10,16 @@ namespace Matterless.Floorcraft
     [System.Serializable]
     public class ChainSettings
     {
-        [Header("ERC-721 NFT Contract Configuration (Active)")]
-        [Tooltip("ERC-721 NFT contract address on Base blockchain")]
-        [SerializeField] private string m_Nft721ContractAddress = "0xe664b8B0BE6C4dAeA83C44b77Da6106313728F39";
+        [Header("ERC-1155 NFT Contract Configuration (Active)")]
+        [Tooltip("ERC-1155 NFT contract address on Base blockchain (Auki Domain NFT)")]
+        [SerializeField] private string m_NftContractAddress = "0xc3ff4ce2419b80ad638d1253cd5933045e924155";
         
-        [Header("ERC-1155 NFT Contract Configuration (Reserved for future use)")]
-        [Tooltip("ERC-1155 NFT contract address on Base blockchain")]
-        [SerializeField] private string m_NftContractAddress = "Get your NFT Contract Address";
+        [Tooltip("ERC-1155 token ID to check ownership for")]
+        [SerializeField] private string m_Nft1155TokenId = "64306102522383898777692056113347394168783302164976809436283082385802875895808";
+        
+        [Header("ERC-721 NFT Contract Configuration (Secondary)")]
+        [Tooltip("ERC-721 NFT contract address on Base blockchain (Floorcraft NFT)")]
+        [SerializeField] private string m_Nft721ContractAddress = "0xe664b8B0BE6C4dAeA83C44b77Da6106313728F39";
         
         [Header("Network Configuration")]
         [Tooltip("RPC endpoint URL (e.g., https://base-mainnet.g.alchemy.com/v2/)")]
@@ -26,20 +29,27 @@ namespace Matterless.Floorcraft
         [SerializeField] private string m_ApiKey = "Get your Alchemy API Key from https://alchemy.com";
         
         // Public accessors
-        public string nft721ContractAddress => m_Nft721ContractAddress;
-        public string nftContractAddress => m_NftContractAddress;  // ERC-1155, kept for future use
+        public string nftContractAddress => m_NftContractAddress;       // ERC-1155 (Active)
+        public string nft1155TokenId => m_Nft1155TokenId;               // ERC-1155 token ID
+        public string nft721ContractAddress => m_Nft721ContractAddress;  // ERC-721 (Secondary)
         public string rpcEndpoint => m_RpcEndpoint;
         public string apiKey => m_ApiKey;
         public string rpcUrl => $"{m_RpcEndpoint}{m_ApiKey}";
         
         /// <summary>
-        /// Check if settings are properly configured for ERC-721
+        /// Check if settings are properly configured (ERC-1155 primary)
         /// </summary>
         public bool IsConfigured()
         {
-            if (string.IsNullOrEmpty(m_Nft721ContractAddress) || m_Nft721ContractAddress.StartsWith("Get your"))
+            if (string.IsNullOrEmpty(m_NftContractAddress) || m_NftContractAddress.StartsWith("Get your"))
             {
-                Debug.LogError("[ChainSettings] ERC-721 NFT contract address is not set!");
+                Debug.LogError("[ChainSettings] ERC-1155 NFT contract address is not set!");
+                return false;
+            }
+            
+            if (string.IsNullOrEmpty(m_Nft1155TokenId))
+            {
+                Debug.LogError("[ChainSettings] ERC-1155 token ID is not set!");
                 return false;
             }
             
@@ -59,16 +69,16 @@ namespace Matterless.Floorcraft
         }
         
         /// <summary>
-        /// Check if ERC-1155 settings are configured (for future use)
+        /// Check if ERC-721 settings are configured (secondary)
         /// </summary>
-        public bool IsERC1155Configured()
+        public bool IsERC721Configured()
         {
-            if (string.IsNullOrEmpty(m_NftContractAddress) || m_NftContractAddress.StartsWith("Get your"))
+            if (string.IsNullOrEmpty(m_Nft721ContractAddress) || m_Nft721ContractAddress.StartsWith("Get your"))
             {
                 return false;
             }
             
-            return IsConfigured();
+            return !string.IsNullOrEmpty(m_ApiKey) && !m_ApiKey.StartsWith("Get your") && !string.IsNullOrEmpty(m_RpcEndpoint);
         }
         
         /// <summary>
@@ -76,8 +86,9 @@ namespace Matterless.Floorcraft
         /// </summary>
         public string GetDebugInfo()
         {
-            return $"ERC-721 Contract (Active): {m_Nft721ContractAddress}\n" +
-                   $"ERC-1155 Contract (Reserved): {m_NftContractAddress}\n" +
+            return $"ERC-1155 Contract (Active): {m_NftContractAddress}\n" +
+                   $"ERC-1155 Token ID: {m_Nft1155TokenId}\n" +
+                   $"ERC-721 Contract (Secondary): {m_Nft721ContractAddress}\n" +
                    $"RPC: {m_RpcEndpoint}***\n" +
                    $"Configured: {IsConfigured()}";
         }

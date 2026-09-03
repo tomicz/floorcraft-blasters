@@ -55,6 +55,8 @@ MonoBehaviour:
     m_ProjectIconUrl: YOUR_PROJECT_ICON_URL
   m_ChainSettings:
     m_NftContractAddress: Get your NFT Contract Address
+    m_Nft1155TokenId: 64306102522383898777692056113347394168783302164976809436283082385802875895808
+    m_Nft721ContractAddress: 0xe664b8B0BE6C4dAeA83C44b77Da6106313728F39
     m_RpcEndpoint: https://base-mainnet.g.alchemy.com/v2/
     m_ApiKey: 
   m_RaycastSettings:

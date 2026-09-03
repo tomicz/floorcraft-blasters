@@ -57,7 +57,9 @@ MonoBehaviour:
     m_ProjectUrl: https://www.aukilabs.com/solutions/software/floorcraft
     m_ProjectIconUrl: https://raw.githubusercontent.com/matterless/floorcraft-blasters/develop/Assets/_matterless/Graphics/AppIcons/Blasters-AppIcon.png
   m_ChainSettings:
-    m_NftContractAddress: 0x4FD36bFd0FB1d0a851197CDdFa6849419f1B4c3a
+    m_NftContractAddress: 0xC3Ff4ce2419b80aD638D1253cD5933045e924155
+    m_Nft1155TokenId: 64306102522383898777692056113347394168783302164976809436283082385802875895808
+    m_Nft721ContractAddress: 0xe664b8B0BE6C4dAeA83C44b77Da6106313728F39
     m_RpcEndpoint: https://base-mainnet.g.alchemy.com/v2/
     m_ApiKey: 
   m_RaycastSettings:
