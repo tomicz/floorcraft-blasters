@@ -332,6 +332,10 @@ namespace Matterless.Floorcraft
             {
                 m_MayhemUiService.ShowButton();
             }
+            else if (m_MayhemModeService.isInHayhemMode)
+            {
+                m_MayhemUiService.HideButton();
+            }
             
             m_CurrentState = State.Gameplay;
         }

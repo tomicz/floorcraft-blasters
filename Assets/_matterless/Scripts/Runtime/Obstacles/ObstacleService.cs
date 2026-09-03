@@ -25,6 +25,10 @@ namespace Matterless.Floorcraft
         
         public bool HasSpawnedObstacles => selectedPlaceable != null && counter.ContainsKey(selectedPlaceable) && counter[selectedPlaceable] > 0;
         public bool HasSpawnedMayhemObstacle => m_IsSpawnedMayhemObstacle;
+        /// <summary>
+        /// In Mayhem mode only the host may place the tower. In other modes always true.
+        /// </summary>
+        public bool IsMayhemTowerPlacementAllowed => !isInHayhemMode || m_AukiWrapper.isHost;
         public int RemainingObstacles => m_Settings.maxObstacles - counter[selectedPlaceable];
 
         private readonly Dictionary<uint, ObstacleView> m_ObstacleViews = new();
@@ -272,6 +276,10 @@ namespace Matterless.Floorcraft
         {
             // this is obsolete, as we hide the button when obstacles have reached the max number
             if(counter[selectedPlaceable] >= m_Settings.maxObstacles)
+                return;
+            
+            // In Mayhem only the host may place the tower (defensive guard in case UI is bypassed).
+            if (isInHayhemMode && selectedPlaceable.assetId == AssetId.MayhemPillar && !m_AukiWrapper.isHost)
                 return;
             
             m_AudioUiService.PlaySelectSound();

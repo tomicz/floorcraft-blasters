@@ -48,6 +48,12 @@ namespace Matterless.Floorcraft
 
         public void ShowButton()
         {
+            // Only host may start Mayhem waves; guard here so client never sees the button even if called by mistake.
+            if (!m_AukiWrapper.isHost)
+            {
+                m_View.HideButton();
+                return;
+            }
             m_View.Show();
             m_View.ShowButton();
         }
