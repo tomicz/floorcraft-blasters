@@ -60,21 +60,19 @@ with `tools/paid-assets.sh install`. See [Docs/PaidAssets.md](Docs/PaidAssets.md
 
 Before running the project, you **must** configure the following:
 
-1. **Auki Posemesh SDK** (Required for multiplayer):
+1. **API keys** go into `.env`, never into the config assets (see [Docs/Secrets.md](Docs/Secrets.md)):
 
-   - Get your App Key and App Secret from [Auki Console](https://console.auki.network)
-   - Open `Assets/_matterless/Data/Blasters Configs`
-   - Fill in Auki settings:
-     - App Key
-     - App Secret
-     - App Domain ID (optional, for testing)
+   ```bash
+   cp .env.example .env
+   ```
 
-2. **Analytics** (Required):
+   - `AUKI_APP_KEY` and `AUKI_APP_SECRET` from [Auki Console](https://console.auki.network), required for multiplayer
+   - `AMPLITUDE_API_KEY` from [Amplitude](https://amplitude.com), required for analytics
+   - `REOWN_PROJECT_ID` and `ALCHEMY_API_KEY` for the optional wallet and NFT features (see the sections below)
 
-   - Get an Amplitude App Key from [Amplitude](https://amplitude.com)
-   - Open `Assets/_matterless/Data/Blasters Configs`
-   - In the Inspector, find "Analytics Settings"
-   - Replace the placeholder with your actual Amplitude API Key
+   The editor generates the gitignored `AppSecrets` asset from this file when the project opens.
+
+2. **Auki domain** (optional, for testing): open `Assets/_matterless/Data/Blasters Configs` and set the App Domain ID.
 
 3. **Optional Integrations:**
    - Reown WalletConnect (see Wallet Integration section below)
@@ -193,11 +191,11 @@ Assets/
 
 The `_matterless/Data` folder contains configurations, some of which you'll need to update with your own information.
 
-- `Blasters Configs` and `Floorcraft Configs` hold configurations for privacy policy, terms of services, Auki posemesh app key, secret and domain id
+- `Blasters Configs` and `Floorcraft Configs` hold configurations for privacy policy, terms of services, Auki posemesh domain id, wallet metadata, and NFT contracts. API keys are not in these assets; they come from `.env` (see [Docs/Secrets.md](Docs/Secrets.md))
 - `Backtrace Configuration` has the settings for [https://backtrace.io/](https://backtrace.io/).
 - `Blasters Environment Settings` contains API Key settings for [https://www.getjoystick.com/](https://www.getjoystick.com/).
 
-You will also need an [Amplitude](https://amplitude.com/) App key in `AnalyticsService.cs` (`m_Amplitude.init("YOUR_AMPLITUDE_ID");`) for tracking analytics.
+You will also need an [Amplitude](https://amplitude.com/) API key, set as `AMPLITUDE_API_KEY` in `.env`, for tracking analytics.
 
 ## Wallet Integration with Reown WalletConnect
 
@@ -214,8 +212,8 @@ This project uses [Reown (formerly WalletConnect)](https://reown.com/) for block
    - Navigate to `Assets/_matterless/Data/`
    - Select `Blasters Configs`
    - In the Inspector, find the "Wallet Settings" section
+   - Put the Project ID from step 1 in `.env` as `REOWN_PROJECT_ID` (it is not stored in the asset)
    - Replace the placeholder values with your actual information:
-     - **Project ID:** Your Reown Project ID from step 1
      - **Project Name:** Your application name
      - **Project Description:** Brief description of your app
      - **Project URL:** Your project website
@@ -241,7 +239,7 @@ This project includes NFT (Non-Fungible Token) integration using [Nethereum](htt
    - Replace the placeholder values:
      - **NFT Contract Address:** Your ERC-1155 contract address on Base blockchain (e.g., `0x1234...`)
      - **RPC Endpoint:** Keep as `https://base-mainnet.g.alchemy.com/v2/`
-     - **API Key:** Your Alchemy API Key from step 1
+   - Put the API Key from step 1 in `.env` as `ALCHEMY_API_KEY` (it is not stored in the asset)
 
 3. **Features:**
 
@@ -260,14 +258,12 @@ This project includes NFT (Non-Fungible Token) integration using [Nethereum](htt
 
 ## Important Security Note
 
-**Never commit your actual API keys to the repository.** The config files should remain with placeholder text in version control. Only fill in real values in your local development environment. This applies to:
-
-- Auki posemesh App Key and Secret
-- Reown WalletConnect Project ID
-- Alchemy API Key (for NFT/blockchain access)
-- Backtrace API settings
-- Joystick API Key
-- Amplitude App Key
+**Never commit API keys to the repository.** The Auki app key and secret, the
+Reown project ID, the Alchemy API key, and the Amplitude API key live only in
+the gitignored `.env` file and the asset generated from it (see
+[Docs/Secrets.md](Docs/Secrets.md)). The pre-push hook refuses commits that
+contain them. Backtrace and Joystick settings are still stored in their config
+assets, so keep those as placeholders in version control.
 
 ## Removed Dependencies
 

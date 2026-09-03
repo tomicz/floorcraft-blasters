@@ -31,7 +31,8 @@ tools/paid-assets.sh install
 This clones or updates both repositories, writes
 `Assets/_matterless/Scripts/Runtime/csc.rsp` with `-define:AVPRO_MOVIECAPTURE`
 so the AVPro-backed `RecordingService` compiles, and installs a pre-push hook
-that refuses to push any commit containing the paid assets.
+that refuses to push any commit containing the paid assets or secrets
+(see [Secrets.md](Secrets.md)).
 
 Other commands:
 
@@ -61,5 +62,5 @@ be overridden with the `AVPRO_REPO` and `EFFECTCORE_REPO` environment variables.
 1. Put the asset in its own private repository, including all `.meta` files so
    GUIDs and import settings are preserved.
 2. Add its path (and the folder `.meta`) to `.gitignore` under "Paid plugins".
-3. Add it to `tools/paid-assets.sh` and to `PAID_PATHS` in `tools/githooks/pre-push`.
+3. Add it to `tools/paid-assets.sh` and to `FORBIDDEN_PATHS` in `tools/githooks/pre-push`.
 4. Keep any code that depends on it behind a define provided by the `csc.rsp`.

@@ -4,7 +4,8 @@ namespace Matterless.Floorcraft
 {
     /// <summary>
     /// NFT blockchain configuration settings.
-    /// Configure contract address, RPC endpoint, and API key for blockchain interaction.
+    /// Configure contract address and RPC endpoint here. The Alchemy API key is not
+    /// serialized: it comes from AppSecrets (see Docs/Secrets.md).
     /// Note: Only read operations (no transactions), so mainnet testing is safe and free.
     /// </summary>
     [System.Serializable]
@@ -24,9 +25,8 @@ namespace Matterless.Floorcraft
         [Header("Network Configuration")]
         [Tooltip("RPC endpoint URL (e.g., https://base-mainnet.g.alchemy.com/v2/)")]
         [SerializeField] private string m_RpcEndpoint = "https://base-mainnet.g.alchemy.com/v2/";
-        
-        [Tooltip("Alchemy API key (get from https://alchemy.com)")]
-        [SerializeField] private string m_ApiKey = "Get your Alchemy API Key from https://alchemy.com";
+
+        [System.NonSerialized] private string m_ApiKey;
         
         // Public accessors
         public string nftContractAddress => m_NftContractAddress;       // ERC-1155 (Active)
@@ -35,6 +35,11 @@ namespace Matterless.Floorcraft
         public string rpcEndpoint => m_RpcEndpoint;
         public string apiKey => m_ApiKey;
         public string rpcUrl => $"{m_RpcEndpoint}{m_ApiKey}";
+
+        internal void SetSecrets(string alchemyApiKey)
+        {
+            m_ApiKey = alchemyApiKey;
+        }
         
         /// <summary>
         /// Check if settings are properly configured (ERC-1155 primary)

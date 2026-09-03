@@ -62,3 +62,8 @@ autoconnectioncofig.json
 
 # Mono crash dumps
 mono_crash.*.json
+
+### Secrets (see Docs/Secrets.md)
+.env
+/Assets/_matterless/Resources/AppSecrets.asset
+/Assets/_matterless/Resources/AppSecrets.asset.meta

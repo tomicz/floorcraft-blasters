@@ -64,6 +64,18 @@ namespace Matterless.Floorcraft
         public AnalyticsSettings analyticsSettings => m_AnalyticsSettings;
         public WalletSettings walletSettings => m_WalletSettings;
         public ChainSettings chainSettings => m_ChainSettings;
+
+        /// <summary>
+        /// Pushes the API keys from the gitignored AppSecrets asset into the settings that need them.
+        /// The receiving fields are not serialized, so nothing is written back to this asset.
+        /// </summary>
+        public void ApplySecrets(AppSecrets secrets)
+        {
+            m_AukiSettings.SetSecrets(secrets.aukiAppKey, secrets.aukiAppSecret);
+            m_AnalyticsSettings.SetSecrets(secrets.amplitudeApiKey);
+            m_WalletSettings.SetSecrets(secrets.reownProjectId);
+            m_ChainSettings.SetSecrets(secrets.alchemyApiKey);
+        }
         public RaycastService.Settings raycastSettings => m_RaycastSettings;
         public ConnectionIndicatorService.Settings connectionIndicationSettings => m_ConnectionIndicationSettings;
         public NetworkService.Settings networkServiceSettings => m_NetworkServiceSettings;

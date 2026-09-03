@@ -1,4 +1,4 @@
-﻿using Auki.Util;
+using Auki.Util;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 
@@ -9,9 +9,12 @@ namespace Matterless.Floorcraft
     [System.Serializable]
     public class AukiSettings
     {
+        // App key and secret are not serialized: they come from AppSecrets (see Docs/Secrets.md)
+        // and are set once at bootstrap through SetSecrets.
+        [System.NonSerialized] private string m_AppKey;
+        [System.NonSerialized] private string m_AppSecret;
+
         [Header("Auki")]
-        [SerializeField] private string m_AppKey;
-        [SerializeField] private string m_AppSecret;
         [SerializeField] private AukiDebug.LogLevel m_LogLevel;
         [SerializeField] private bool m_AutoJoinOnStart = true;
         [SerializeField] private bool m_UseGrund = true;
@@ -42,5 +45,11 @@ namespace Matterless.Floorcraft
         public EnvironmentDepthMode environmentDepthMode => m_EnvironmentDepthMode;
         public bool useThisSessionIdInEditor => m_UseThisSessionIdInEditor;
         public string sessionId => m_SessionId;
+
+        internal void SetSecrets(string appKey, string appSecret)
+        {
+            m_AppKey = appKey;
+            m_AppSecret = appSecret;
+        }
     }
 }
