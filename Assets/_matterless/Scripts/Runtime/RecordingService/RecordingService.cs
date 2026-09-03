@@ -1,3 +1,4 @@
+#if AVPRO_MOVIECAPTURE
 using System;
 using System.IO;
 using UnityEngine;
@@ -21,7 +22,7 @@ namespace Matterless.Floorcraft
         private INativeShareService m_NativeShareService;
         private readonly IAudioService m_AudioService;
         private readonly IUnityEventDispatcher m_UnityEventDispatcher;
-        private readonly Settings m_Settings;
+        private readonly RecordingSettings m_Settings;
         private FileWritingHandler m_FileWritingHandler;
         private CameraSelector m_CameraSelector;
         private CaptureAudioFromAudioListener m_AudioCapture;
@@ -39,7 +40,7 @@ namespace Matterless.Floorcraft
             IAudioService audioService,
             IUnityEventDispatcher unityEventDispatcher,
             IAnalyticsService analyticsService,
-            Settings settings)
+            RecordingSettings settings)
         {
             m_AudioService = audioService;
             m_UnityEventDispatcher = unityEventDispatcher;
@@ -341,23 +342,6 @@ namespace Matterless.Floorcraft
                 m_AudioService.Play(m_Settings.stopSound);
             }
         }
-
-        [System.Serializable]
-        public class Settings
-        {
-            #region Inspector
-            [SerializeField] private float m_MaxDuration = 60f;
-            [SerializeField] private string m_OutputFolder = "Captures";
-            [SerializeField] private string m_PhotoSound;
-            [SerializeField] private string m_StartSound;
-            [SerializeField] private string m_StopSound;
-            #endregion
-
-            public float maxDuration => m_MaxDuration;
-            public string outputFolder => m_OutputFolder;
-            public string photoSound => m_PhotoSound;
-            public string startSound => m_StartSound;
-            public string stopSound => m_StopSound;
-        }
     }
 }
+#endif
