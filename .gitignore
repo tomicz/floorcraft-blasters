@@ -71,3 +71,9 @@ mono_crash.*.json
 # Android signing keys
 *.keystore
 *.jks
+
+# Android libraries copied in by the External Dependency Manager (re-resolved on every build)
+/Assets/Plugins/Android/*.aar
+/Assets/Plugins/Android/*.aar.meta
+/Assets/Plugins/Android/*.jar
+/Assets/Plugins/Android/*.jar.meta
