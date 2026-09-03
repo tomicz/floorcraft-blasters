@@ -4,43 +4,61 @@ API keys are never committed. They live in a `.env` file at the project root,
 which the Unity editor turns into a generated `AppSecrets` asset that ships in
 the build. Both files are gitignored.
 
-| Key | Used by |
-|---|---|
-| `AUKI_APP_KEY`, `AUKI_APP_SECRET` | Auki posemesh session and DDS authentication |
-| `AMPLITUDE_API_KEY` | Analytics |
-| `REOWN_PROJECT_ID` | Wallet connection (Reown AppKit) |
-| `ALCHEMY_API_KEY` | NFT ownership checks on Base |
+| Variable | Used by | Where to get it |
+|---|---|---|
+| `AUKI_APP_KEY`, `AUKI_APP_SECRET` | Auki posemesh session and DDS authentication | [Auki Console](https://console.auki.network) |
+| `AMPLITUDE_API_KEY` | Analytics | [Amplitude](https://amplitude.com) |
+| `REOWN_PROJECT_ID` | Wallet connection (Reown AppKit) | [Reown Cloud](https://cloud.reown.com) |
+| `ALCHEMY_API_KEY` | NFT ownership checks on Base | [Alchemy](https://alchemy.com) |
 
 ## Setup
 
 ```bash
 cp .env.example .env
 # fill in the values
+tools/paid-assets.sh hook   # optional: installs the pre-push guard described below
 ```
 
-Open the project in Unity. `SecretsSync` (an editor script) reads `.env` on
-editor load, before every build, and from **Matterless > Secrets > Sync from
-.env**, and writes `Assets/_matterless/Resources/AppSecrets.asset`. Process
-environment variables with the same names override `.env`, which is how CI
-supplies them.
+`.env` is a plain `KEY=VALUE` file. Blank lines and `#` comments are ignored,
+values may be quoted, and a leading `export ` is accepted.
 
-At runtime `RootInstaller` loads the asset with `AppSecrets.Load()` and pushes
-the values into the settings objects that need them (`AukiSettings`,
-`AnalyticsSettings`, `WalletSettings`, `ChainSettings`). The receiving fields
-are not serialized, so nothing is written back into the tracked config assets.
+Open the project in Unity. `SecretsSync` (an editor script in
+`Assets/_matterless/Scripts/Editor`) reads `.env` whenever scripts reload,
+before every build, and from **Matterless > Secrets > Sync from .env**, and
+writes `Assets/_matterless/Resources/AppSecrets.asset`. The console logs
+`[Secrets] ... updated from .env` when the asset changes. Process environment
+variables with the same names override `.env`, which is how CI supplies them.
+
+## How the values reach the code
+
+At runtime `RootInstaller` calls `AppSecrets.Load()`, which loads the asset from
+`Resources`, and passes it to `AppConfigs.ApplySecrets`. That pushes each value
+into a non-serialized field of the settings object that needs it:
+
+| Value | Settings object | Accessor |
+|---|---|---|
+| Auki app key and secret | `AukiSettings` | `appKey`, `appSecret` |
+| Amplitude API key | `AnalyticsSettings` | `amplitudeApiKey` |
+| Reown project id | `WalletSettings` | `projectId` |
+| Alchemy API key | `ChainSettings` | `apiKey`, `rpcUrl` |
+
+Because the receiving fields are not serialized, nothing is ever written back
+into the tracked config assets, and services keep reading the same accessors
+they always did.
 
 ## Without secrets
 
-The project compiles and runs. `AppSecrets.Load()` logs one error, and the
-features that need a key log their own warning and stay disabled: no Auki
-session, no analytics, no wallet, no NFT checks.
+The project compiles and runs. `AppSecrets.Load()` logs one error naming this
+document, and each feature that needs a key logs its own warning and stays
+disabled: no Auki session, no analytics, no wallet, no NFT checks.
 
 ## Guard rails
 
 - `.env`, `AppSecrets.asset`, and its meta file are gitignored.
-- The pre-push hook installed by `tools/paid-assets.sh` refuses to push a
-  commit that contains those files, or a config asset where one of the old key
-  fields still carries a value.
+- The pre-push hook installed by `tools/paid-assets.sh hook` refuses to push a
+  commit that contains those files, or a config asset where one of the former
+  key fields still carries a value. Run `tools/paid-assets.sh check` to scan
+  unpushed commits by hand.
 
 ## Adding a new secret
 
@@ -49,3 +67,5 @@ session, no analytics, no wallet, no NFT checks.
    `SecretsSync.s_Keys`.
 3. Give the consuming settings class a non-serialized field plus a `SetSecrets`
    method, and wire it in `AppConfigs.ApplySecrets`.
+4. If the value previously lived in a config asset, add its field name to
+   `SECRET_FIELDS` in `tools/githooks/pre-push`.
