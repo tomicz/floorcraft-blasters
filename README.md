@@ -29,7 +29,7 @@ with `tools/paid-assets.sh install`. See [Docs/PaidAssets.md](Docs/PaidAssets.md
 - **Unity 2022.3.62f2** (or compatible 2022.3.x LTS version)
 - **Platform SDKs:**
   - iOS: Xcode 14+ and iOS 14+ device
-  - Android: Android SDK with API Level 24+ (Android 7.0+)
+  - Android: Android SDK with API Level 26+ (Android 8.0+)
 - **Git** for cloning the repository
 - **ARCore/ARKit compatible device** (AR features won't work in Unity Editor camera view)
 
@@ -138,7 +138,7 @@ are the ones that ship.
 2. **Player Settings:**
 
    - Set Package Name
-   - Minimum API Level: 24 (Android 7.0)
+   - Minimum API Level: 26 (Android 8.0), required by AVPro Movie Capture
 
 3. **Build and Run:**
    - Connect Android device via USB
