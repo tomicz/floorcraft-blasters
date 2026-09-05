@@ -1,27 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" 
-          package="com.yourcompany.com" 
-          xmlns:tools="http://schemas.android.com/tools" 
-          android:versionName="0.2" 
-          android:versionCode="1" 
+<!-- Package name, version name and version code come from Unity's Player Settings; Unity sets them in the Gradle project. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.unity3d.player"
+          xmlns:tools="http://schemas.android.com/tools"
           android:installLocation="preferExternal">
     
     <supports-screens android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" android:xlargeScreens="true" android:anyDensity="true" />
-    <uses-sdk android:targetSdkVersion="33" />
-
     <!-- Permissions -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     
     <!-- AR Features -->
     <uses-feature android:name="android.hardware.camera.ar" android:required="true" />
     <uses-feature android:glEsVersion="0x00030000" android:required="true" />
     
-    <application android:usesCleartextTraffic="true">
+    <application>
 
         <!-- Unity -->
         <activity
