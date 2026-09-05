@@ -28,7 +28,6 @@ MonoBehaviour:
     m_LogLevel: 3
     m_AutoJoinOnStart: 0
     m_UseGrund: 1
-    m_AppDomainId: privacy
     m_MannaSettings:
       m_ScanningType: 10
       m_HighScanningFrequency: 0.1
@@ -41,7 +40,6 @@ MonoBehaviour:
     m_HumanSegmentationStencilMode: 0
     m_EnvironmentDepthMode: 0
     m_UseThisSessionIdInEditor: 0
-    m_SessionId: c72082fd-453f-4f0d-ae68-d3a553bc82a0
   m_AnalyticsSettings:
     m_EnableLogging: 1
   m_WalletSettings:

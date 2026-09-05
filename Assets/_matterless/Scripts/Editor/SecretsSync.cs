@@ -11,7 +11,8 @@ namespace Matterless.Floorcraft.Editor
     /// <summary>
     /// Generates Assets/_matterless/Resources/AppSecrets.asset from the project's .env file.
     /// Process environment variables with the same names take precedence, which is what CI uses.
-    /// Runs when the editor loads, before every build, and from the Matterless > Secrets menu.
+    /// Runs when scripts reload, before every build, and from the Matterless > Secrets menu.
+    /// The build tooling reads Android identity and signing values through <see cref="ReadValues"/>.
     /// See Docs/Secrets.md.
     /// </summary>
     [InitializeOnLoad]
@@ -20,14 +21,16 @@ namespace Matterless.Floorcraft.Editor
         private const string AssetPath = "Assets/_matterless/Resources/AppSecrets.asset";
         private const string EnvFileName = ".env";
 
-        // Environment variable name -> serialized field on AppSecrets.
-        private static readonly (string env, string field)[] s_Keys =
+        // Environment variable name -> serialized field on AppSecrets. Required ones are warned about when empty.
+        private static readonly (string env, string field, bool required)[] s_Keys =
         {
-            ("AUKI_APP_KEY", "m_AukiAppKey"),
-            ("AUKI_APP_SECRET", "m_AukiAppSecret"),
-            ("AMPLITUDE_API_KEY", "m_AmplitudeApiKey"),
-            ("REOWN_PROJECT_ID", "m_ReownProjectId"),
-            ("ALCHEMY_API_KEY", "m_AlchemyApiKey"),
+            ("AUKI_APP_KEY", "m_AukiAppKey", true),
+            ("AUKI_APP_SECRET", "m_AukiAppSecret", true),
+            ("AMPLITUDE_API_KEY", "m_AmplitudeApiKey", true),
+            ("REOWN_PROJECT_ID", "m_ReownProjectId", true),
+            ("ALCHEMY_API_KEY", "m_AlchemyApiKey", true),
+            ("AUKI_DOMAIN_ID", "m_AukiDomainId", false),
+            ("AUKI_EDITOR_SESSION_ID", "m_AukiEditorSessionId", false),
         };
 
         public int callbackOrder => -100;
@@ -44,22 +47,35 @@ namespace Matterless.Floorcraft.Editor
 
         private static string EnvPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", EnvFileName));
 
-        private static void Sync(bool verbose)
+        /// <summary>All values from .env, with process environment variables overriding the file.</summary>
+        internal static Dictionary<string, string> ReadValues()
         {
             var values = ReadEnvFile(EnvPath);
-            foreach (var (env, _) in s_Keys)
+            foreach (string name in Environment.GetEnvironmentVariables().Keys)
             {
-                var fromProcess = Environment.GetEnvironmentVariable(env);
+                var fromProcess = Environment.GetEnvironmentVariable(name);
                 if (!string.IsNullOrEmpty(fromProcess))
                 {
-                    values[env] = fromProcess;
+                    values[name] = fromProcess;
                 }
             }
+            return values;
+        }
+
+        /// <summary>One value from .env or the process environment, or null when unset or empty.</summary>
+        internal static string Get(Dictionary<string, string> values, string name)
+        {
+            return values.TryGetValue(name, out var v) && !string.IsNullOrEmpty(v) ? v : null;
+        }
+
+        private static void Sync(bool verbose)
+        {
+            var values = ReadValues();
 
             var anyValue = false;
-            foreach (var (env, _) in s_Keys)
+            foreach (var (env, _, _) in s_Keys)
             {
-                anyValue |= values.TryGetValue(env, out var v) && !string.IsNullOrEmpty(v);
+                anyValue |= Get(values, env) != null;
             }
 
             var asset = AssetDatabase.LoadAssetAtPath<AppSecrets>(AssetPath);
@@ -83,10 +99,10 @@ namespace Matterless.Floorcraft.Editor
             var serialized = new SerializedObject(asset);
             var changed = false;
             var missing = new List<string>();
-            foreach (var (env, field) in s_Keys)
+            foreach (var (env, field, required) in s_Keys)
             {
-                var value = values.TryGetValue(env, out var v) ? v : string.Empty;
-                if (string.IsNullOrEmpty(value))
+                var value = Get(values, env) ?? string.Empty;
+                if (required && value.Length == 0)
                 {
                     missing.Add(env);
                 }

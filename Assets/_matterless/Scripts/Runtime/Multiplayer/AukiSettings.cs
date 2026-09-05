@@ -9,16 +9,18 @@ namespace Matterless.Floorcraft
     [System.Serializable]
     public class AukiSettings
     {
-        // App key and secret are not serialized: they come from AppSecrets (see Docs/Secrets.md)
-        // and are set once at bootstrap through SetSecrets.
+        // App key, app secret, the posemesh domain id and the editor test session id are not
+        // serialized: they are deployment-specific and come from AppSecrets (see Docs/Secrets.md),
+        // set once at bootstrap through SetSecrets.
         [System.NonSerialized] private string m_AppKey;
         [System.NonSerialized] private string m_AppSecret;
+        [System.NonSerialized] private string m_AppDomainId;
+        [System.NonSerialized] private string m_SessionId;
 
         [Header("Auki")]
         [SerializeField] private AukiDebug.LogLevel m_LogLevel;
         [SerializeField] private bool m_AutoJoinOnStart = true;
         [SerializeField] private bool m_UseGrund = true;
-        [SerializeField] private string m_AppDomainId;
 
         [Header("Manna")]
         [SerializeField] private MannaService.Settings m_MannaSettings;
@@ -29,8 +31,9 @@ namespace Matterless.Floorcraft
         [SerializeField] private HumanSegmentationStencilMode m_HumanSegmentationStencilMode;
         [SerializeField] private EnvironmentDepthMode m_EnvironmentDepthMode;
 
-        [Header("Debug")][SerializeField] private bool m_UseThisSessionIdInEditor = false;
-        [SerializeField] private string m_SessionId;
+        [Header("Debug")]
+        [Tooltip("Editor only: connect to the session id given by AUKI_EDITOR_SESSION_ID in .env instead of creating one")]
+        [SerializeField] private bool m_UseThisSessionIdInEditor = false;
 
         public MannaService.Settings mannaSettings => m_MannaSettings;
         public string appKey => m_AppKey;
@@ -46,10 +49,12 @@ namespace Matterless.Floorcraft
         public bool useThisSessionIdInEditor => m_UseThisSessionIdInEditor;
         public string sessionId => m_SessionId;
 
-        internal void SetSecrets(string appKey, string appSecret)
+        internal void SetSecrets(string appKey, string appSecret, string appDomainId, string editorSessionId)
         {
             m_AppKey = appKey;
             m_AppSecret = appSecret;
+            m_AppDomainId = appDomainId;
+            m_SessionId = editorSessionId;
         }
     }
 }

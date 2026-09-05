@@ -71,7 +71,7 @@ namespace Matterless.Floorcraft
         /// </summary>
         public void ApplySecrets(AppSecrets secrets)
         {
-            m_AukiSettings.SetSecrets(secrets.aukiAppKey, secrets.aukiAppSecret);
+            m_AukiSettings.SetSecrets(secrets.aukiAppKey, secrets.aukiAppSecret, secrets.aukiDomainId, secrets.aukiEditorSessionId);
             m_AnalyticsSettings.SetSecrets(secrets.amplitudeApiKey);
             m_WalletSettings.SetSecrets(secrets.reownProjectId);
             m_ChainSettings.SetSecrets(secrets.alchemyApiKey);
