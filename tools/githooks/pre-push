@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 #
 # Pre-push guard: refuse to push any commit that contains the paid assets,
-# the secrets files, or API keys inside the config assets. Installed by
-# tools/paid-assets.sh; can also be run by hand as:
+# the secrets files, or API keys inside the config assets, and refuse a tip
+# whose tracked settings carry deployment identity (store package names,
+# posemesh ids, keystore path). Installed by tools/paid-assets.sh; can also
+# be run by hand as:
 #   tools/githooks/pre-push --range <rev-list args>
 #
 set -u
@@ -27,6 +29,20 @@ CONFIG_ASSETS=(
 SECRET_FIELDS='^ *m_(AppKey|AppSecret|AmplitudeApiKey|ProjectId|ApiKey): *[^ ]+ *$'
 PLACEHOLDERS='^ *m_[A-Za-z]+: *YOUR_'
 
+# Deployment identity that belongs in .env, checked on the tree being pushed (see Docs/Secrets.md).
+IDENTITY_FILES=(
+    "ProjectSettings/ProjectSettings.asset"
+    "ProjectSettings/AndroidResolverDependencies.xml"
+    "Assets/_matterless/_BuildConfigs"
+    "Assets/_matterless/Data"
+    "Assets/_matterless/Scripts/ECSTest"
+)
+IDENTITY_PATTERNS=(
+    'com\.auki\.'                                        # store package name of the published app
+    '^ *m_(AppDomainId|SessionId): *[0-9a-f]{8}-[0-9a-f]{4}-'  # posemesh domain / session id
+    '^ *AndroidKeystoreName: *[^ ]'                      # local keystore path
+)
+
 ZERO=0000000000000000000000000000000000000000
 failed=0
 
@@ -42,7 +58,7 @@ show_first() {  # print at most $1 lines of stdin, indented
 scan() {
     # $1 = tip commit, remaining args = rev-list range arguments
     local tip="$1"; shift
-    local hits c leaks=""
+    local hits c leaks="" pattern
 
     hits="$(git ls-tree -r --name-only "$tip" -- "${FORBIDDEN_PATHS[@]}" 2>/dev/null)"
     if [ -n "$hits" ]; then
@@ -69,6 +85,16 @@ scan() {
         printf '%s' "$leaks" | show_first 10
         failed=1
     fi
+
+    # Deployment identity in the tree being pushed (history is not scanned for these)
+    for pattern in "${IDENTITY_PATTERNS[@]}"; do
+        hits="$(git grep -n -E "$pattern" "$tip" -- "${IDENTITY_FILES[@]}" 2>/dev/null | sed "s/^$tip://")"
+        if [ -n "$hits" ]; then
+            echo "REFUSED: commit ${tip:0:10} carries deployment identity that belongs in .env:" >&2
+            printf '%s\n' "$hits" | show_first 5
+            failed=1
+        fi
+    done
 }
 
 if [ "${1:-}" = "--range" ]; then
@@ -88,7 +114,7 @@ else
 fi
 
 if [ "$failed" -ne 0 ]; then
-    echo "Paid assets and secrets must never be pushed. See Docs/PaidAssets.md and Docs/Secrets.md." >&2
+    echo "Paid assets, secrets and deployment identity must never be pushed. See Docs/PaidAssets.md and Docs/Secrets.md." >&2
     exit 1
 fi
 exit 0
