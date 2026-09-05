@@ -145,6 +145,12 @@ are the ones that ship.
    - Enable USB Debugging on device
    - Click "Build and Run"
 
+For a Google Play upload, select `Assets/_matterless/_BuildConfigs/BC_Floorcraft_Blasters_Android`
+and press **Build Android App Bundle** in its Inspector. The config sets the package name,
+version, version code and defines, and writes the `.aab` to the `Builds` folder. The release
+keystore comes from Player Settings; its passwords are asked for per editor session or read from
+`ANDROID_KEYSTORE_PASS` and `ANDROID_KEYALIAS_PASS`.
+
 ### Project Structure
 
 ```
