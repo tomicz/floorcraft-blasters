@@ -72,7 +72,9 @@ Before running the project, you **must** configure the following:
 
    The editor generates the gitignored `AppSecrets` asset from this file whenever scripts
    reload and before every build. Without a `.env` the project still opens and runs, with
-   multiplayer, analytics, wallet, and NFT features disabled.
+   multiplayer, analytics, wallet, and NFT features disabled. The same file carries the
+   optional deployment identity (posemesh domain id, Android package name and keystore),
+   so the tracked config assets and Player Settings only hold placeholders.
 
 2. **Push guard** (recommended for contributors): install the pre-push hook that refuses
    commits containing `.env`, API keys, or the paid assets:
@@ -81,7 +83,7 @@ Before running the project, you **must** configure the following:
    tools/paid-assets.sh hook
    ```
 
-3. **Auki domain** (optional, for testing): open `Assets/_matterless/Data/Blasters Configs` and set the App Domain ID.
+3. **Auki domain** (optional): set `AUKI_DOMAIN_ID` in `.env`; the config assets no longer hold it.
 
 4. **Optional Integrations:**
    - Reown WalletConnect (see Wallet Integration section below)
@@ -146,10 +148,11 @@ are the ones that ship.
    - Click "Build and Run"
 
 For a Google Play upload, select `Assets/_matterless/_BuildConfigs/BC_Floorcraft_Blasters_Android`
-and press **Build Android App Bundle** in its Inspector. The config sets the package name,
-version, version code and defines, and writes the `.aab` to the `Builds` folder. The release
-keystore comes from Player Settings; its passwords are asked for per editor session or read from
-`ANDROID_KEYSTORE_PASS` and `ANDROID_KEYALIAS_PASS`.
+and press **Build Android App Bundle** in its Inspector. The config sets version, version code
+and defines and writes the `.aab` to the `Builds` folder. The store package name and the
+release keystore come from `ANDROID_PACKAGE_NAME`, `ANDROID_KEYSTORE_PATH`,
+`ANDROID_KEYSTORE_ALIAS` and the two password variables in `.env`; they are applied for the
+build only, so the tracked Player Settings keep their neutral values.
 
 ### Project Structure
 

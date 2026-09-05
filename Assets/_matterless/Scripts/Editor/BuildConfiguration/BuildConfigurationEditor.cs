@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UEditor = UnityEditor.Editor;
@@ -11,6 +12,14 @@ namespace Matterless.Floorcraft.Editor
     [CustomEditor(typeof(BuildConfiguration))]
     public class BuildConfigurationEditor : UEditor
     {
+        // Android store identity and signing come from .env (or the process environment), so the
+        // tracked Player Settings keep neutral values. See Docs/Secrets.md.
+        private const string EnvPackageName = "ANDROID_PACKAGE_NAME";
+        private const string EnvKeystorePath = "ANDROID_KEYSTORE_PATH";
+        private const string EnvKeystoreAlias = "ANDROID_KEYSTORE_ALIAS";
+        private const string EnvKeystorePass = "ANDROID_KEYSTORE_PASS";
+        private const string EnvKeyaliasPass = "ANDROID_KEYALIAS_PASS";
+
         public override void OnInspectorGUI()
         {
             var config = (BuildConfiguration)target;
@@ -102,10 +111,24 @@ namespace Matterless.Floorcraft.Editor
                 SetAppEditorSettings(config);
 
                 if (target == BuildTarget.Android)
-                    PrepareAndroid(config);
-
-                // Build player
-                buildReport = BuildPipeline.BuildPlayer(config.scenePathArray, path, target, buildOptions);
+                {
+                    // Apply the store identity for the duration of the build only, so the tracked
+                    // Player Settings keep their neutral values afterwards.
+                    var neutral = AndroidIdentity.Capture();
+                    try
+                    {
+                        PrepareAndroid(config);
+                        buildReport = BuildPipeline.BuildPlayer(config.scenePathArray, path, target, buildOptions);
+                    }
+                    finally
+                    {
+                        neutral.Restore();
+                    }
+                }
+                else
+                {
+                    buildReport = BuildPipeline.BuildPlayer(config.scenePathArray, path, target, buildOptions);
+                }
 
                 if (interactive)
                 {
@@ -122,8 +145,8 @@ namespace Matterless.Floorcraft.Editor
         }
 
         /// <summary>
-        /// Android specifics. Player Settings keeps the keystore path and alias, but the passwords only live
-        /// for the editor session, so a fresh session or CI can pass them through environment variables.
+        /// Android specifics: app bundle toggle, package name and release signing from .env.
+        /// Keystore passwords may also be typed into Player Settings for the editor session.
         /// </summary>
         private static void PrepareAndroid(BuildConfiguration config)
         {
@@ -132,21 +155,62 @@ namespace Matterless.Floorcraft.Editor
             if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
                 Debug.LogWarning("[Build] Active platform is not Android; Unity switches platform as part of this build, which takes a while.");
 
+            var env = SecretsSync.ReadValues();
+
+            string packageName = SecretsSync.Get(env, EnvPackageName) ?? config.appIdentifier;
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, packageName);
+            Debug.Log($"[Build] Android package name: {packageName}" +
+                      (SecretsSync.Get(env, EnvPackageName) != null ? $" (from {EnvPackageName})" : " (from the build config)"));
+
+            string keystorePath = SecretsSync.Get(env, EnvKeystorePath);
+            if (keystorePath != null)
+            {
+                PlayerSettings.Android.useCustomKeystore = true;
+                PlayerSettings.Android.keystoreName = keystorePath;
+                PlayerSettings.Android.keyaliasName = SecretsSync.Get(env, EnvKeystoreAlias) ?? PlayerSettings.Android.keyaliasName;
+            }
+
             if (!PlayerSettings.Android.useCustomKeystore)
             {
-                Debug.LogWarning("[Build] Android build uses the debug keystore. Google Play rejects it; set the release keystore in Player Settings > Publishing Settings.");
+                Debug.LogWarning($"[Build] Android build uses the debug keystore. Google Play rejects it; set {EnvKeystorePath} and {EnvKeystoreAlias} in .env.");
                 return;
             }
 
-            string keystorePass = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS");
-            string keyaliasPass = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_PASS");
-            if (string.IsNullOrEmpty(PlayerSettings.Android.keystorePass) && !string.IsNullOrEmpty(keystorePass))
+            string keystorePass = SecretsSync.Get(env, EnvKeystorePass);
+            string keyaliasPass = SecretsSync.Get(env, EnvKeyaliasPass);
+            if (keystorePass != null)
                 PlayerSettings.Android.keystorePass = keystorePass;
-            if (string.IsNullOrEmpty(PlayerSettings.Android.keyaliasPass) && !string.IsNullOrEmpty(keyaliasPass))
+            if (keyaliasPass != null)
                 PlayerSettings.Android.keyaliasPass = keyaliasPass;
 
             if (string.IsNullOrEmpty(PlayerSettings.Android.keystorePass) || string.IsNullOrEmpty(PlayerSettings.Android.keyaliasPass))
-                Debug.LogWarning("[Build] Keystore passwords are not set for this editor session. Enter them in Player Settings > Publishing Settings, or set ANDROID_KEYSTORE_PASS and ANDROID_KEYALIAS_PASS.");
+                Debug.LogWarning($"[Build] Keystore passwords are not set. Enter them in Player Settings > Publishing Settings for this session, or set {EnvKeystorePass} and {EnvKeyaliasPass} in .env.");
+        }
+
+        /// <summary>The Android Player Settings that a store build overrides, so they can be put back.</summary>
+        private struct AndroidIdentity
+        {
+            private string m_Identifier;
+            private bool m_UseCustomKeystore;
+            private string m_KeystoreName;
+            private string m_KeyaliasName;
+
+            public static AndroidIdentity Capture() => new AndroidIdentity
+            {
+                m_Identifier = PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.Android),
+                m_UseCustomKeystore = PlayerSettings.Android.useCustomKeystore,
+                m_KeystoreName = PlayerSettings.Android.keystoreName,
+                m_KeyaliasName = PlayerSettings.Android.keyaliasName,
+            };
+
+            public void Restore()
+            {
+                PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, m_Identifier);
+                PlayerSettings.Android.useCustomKeystore = m_UseCustomKeystore;
+                PlayerSettings.Android.keystoreName = m_KeystoreName;
+                PlayerSettings.Android.keyaliasName = m_KeyaliasName;
+                AssetDatabase.SaveAssets();
+            }
         }
     }
 }
