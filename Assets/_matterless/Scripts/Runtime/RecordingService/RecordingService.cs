@@ -184,10 +184,10 @@ namespace Matterless.Floorcraft
             m_CaptureFromCamera.StopMode = StopMode.SecondsElapsed;
             m_CaptureFromCamera.StopAfterSecondsElapsed = m_Settings.maxDuration;
             m_CaptureFromCamera.OutputTarget = OutputTarget.VideoFile;
-            m_CaptureFromCamera.OutputFolder = CaptureBase.OutputPath.RelativeToPeristentData;
+            m_CaptureFromCamera.OutputFolder = CaptureBase.OutputPath.RelativeToPersistentData;
             m_CaptureFromCamera.OutputFolderPath = m_Settings.outputFolder;
             m_CaptureFromCamera.FilenamePrefix = "MatterlessCapture";
-            m_CaptureFromCamera.AppendFilenameTimestamp = true;
+            m_CaptureFromCamera.FileNameComponents = CaptureBase.FilenameComponents.Date | CaptureBase.FilenameComponents.Time;
             m_CaptureFromCamera.ResolutionDownScale = CaptureBase.DownScale.Original;
             m_CaptureFromCamera.FrameRate = 30f;
             m_CaptureFromCamera.TimelapseScale = 1;
