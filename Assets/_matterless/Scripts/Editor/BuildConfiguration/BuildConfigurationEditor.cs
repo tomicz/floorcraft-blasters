@@ -36,10 +36,40 @@ namespace Matterless.Floorcraft.Editor
             if (GUILayout.Button($"Build {what} (Dev Build)"))
                 Build(config, BuildOptions.Development);
 
+            GUILayout.Space(6);
+
+            string releasePath = OutputPath(config, BuildOptions.None);
+            string devPath = OutputPath(config, BuildOptions.Development);
+            string existing = Exists(releasePath) ? releasePath : Exists(devPath) ? devPath : null;
+            EditorGUILayout.HelpBox(existing != null
+                ? $"Last build: {existing}"
+                : $"No build yet. Output: {releasePath}", MessageType.None);
+            if (GUILayout.Button(existing != null ? "Reveal Build in Finder" : "Open Builds Folder"))
+                EditorUtility.RevealInFinder(existing ?? BuildsFolder());
+
             GUILayout.Space(10);
 
             base.OnInspectorGUI();
         }
+
+        private static string BuildsFolder() =>
+            Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Builds");
+
+        /// <summary>Where a build of this config ends up: an Xcode project folder for iOS, a single file for Android.</summary>
+        private static string OutputPath(BuildConfiguration config, BuildOptions buildOptions)
+        {
+            string path = Path.Combine(BuildsFolder(), config.appBuildFolder);
+
+            if (buildOptions == BuildOptions.Development)
+                path += "_dev";
+
+            if (TargetOf(config) == BuildTarget.Android)
+                path += config.androidExtension;
+
+            return path;
+        }
+
+        private static bool Exists(string path) => File.Exists(path) || Directory.Exists(path);
 
         private static string BuildLabel(BuildConfiguration config)
         {
@@ -91,19 +121,10 @@ namespace Matterless.Floorcraft.Editor
             var target = TargetOf(config);
             string what = BuildLabel(config);
 
-            string path = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Builds");
+            if (!Directory.Exists(BuildsFolder()))
+                Directory.CreateDirectory(BuildsFolder());
 
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
-
-            path = Path.Combine(path, config.appBuildFolder);
-
-            if (buildOptions == BuildOptions.Development)
-                path += "_dev";
-
-            // iOS produces an Xcode project folder; Android produces a single file
-            if (target == BuildTarget.Android)
-                path += config.androidExtension;
+            string path = OutputPath(config, buildOptions);
 
             if (!interactive || EditorUtility.DisplayDialog($"Build {what}", $"Build {what} at:\n\"{path}\" ?", "Build", "Nope!"))
             {
@@ -213,10 +234,16 @@ namespace Matterless.Floorcraft.Editor
 
             public void Restore()
             {
-                PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, m_Identifier);
-                PlayerSettings.Android.useCustomKeystore = m_UseCustomKeystore;
-                PlayerSettings.Android.keystoreName = m_KeystoreName;
-                PlayerSettings.Android.keyaliasName = m_KeyaliasName;
+                // Only write back what the build changed; assigning an unchanged empty keystore
+                // name still dirties ProjectSettings.asset.
+                if (PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.Android) != m_Identifier)
+                    PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, m_Identifier);
+                if (PlayerSettings.Android.useCustomKeystore != m_UseCustomKeystore)
+                    PlayerSettings.Android.useCustomKeystore = m_UseCustomKeystore;
+                if (PlayerSettings.Android.keystoreName != m_KeystoreName)
+                    PlayerSettings.Android.keystoreName = m_KeystoreName;
+                if (PlayerSettings.Android.keyaliasName != m_KeyaliasName)
+                    PlayerSettings.Android.keyaliasName = m_KeyaliasName;
                 AssetDatabase.SaveAssets();
             }
         }
