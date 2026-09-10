@@ -147,6 +147,7 @@ namespace Matterless.Floorcraft.Editor
         /// <summary>
         /// Android specifics: app bundle toggle, package name and release signing from .env.
         /// Keystore passwords may also be typed into Player Settings for the editor session.
+        /// Configs with debug signing enabled skip the keystore entirely.
         /// </summary>
         private static void PrepareAndroid(BuildConfiguration config)
         {
@@ -161,6 +162,13 @@ namespace Matterless.Floorcraft.Editor
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, packageName);
             Debug.Log($"[Build] Android package name: {packageName}" +
                       (SecretsSync.Get(env, EnvPackageName) != null ? $" (from {EnvPackageName})" : " (from the build config)"));
+
+            if (config.androidDebugSigning)
+            {
+                PlayerSettings.Android.useCustomKeystore = false;
+                Debug.Log("[Build] Android build is signed with the debug keystore (test build).");
+                return;
+            }
 
             string keystorePath = SecretsSync.Get(env, EnvKeystorePath);
             if (keystorePath != null)
