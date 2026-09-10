@@ -132,27 +132,42 @@ namespace Matterless.Floorcraft
             {
                 return;
             }
-            StartCapture();
-            m_AnalyticsService.StartRecording();
+            if (StartCapture())
+            {
+                m_AnalyticsService.StartRecording();
+            }
         }
 
         public void StopRecording()
         {
-            if (m_CaptureFromCamera == null)
+            if (!IsRecording)
             {
                 return;
             }
 
-            if (m_CaptureFromCamera.IsCapturing())
+            // AVPro can stop on its own (its SecondsElapsed stop mode, low disk space, native errors),
+            // so only stop the capture if it is still running, but always leave the recording state.
+            // Gating on IsCapturing() alone left the stop button stuck whenever the two disagreed.
+            if (m_CaptureFromCamera != null && m_CaptureFromCamera.IsCapturing())
             {
-                PlayStopCaptureSound();
-                m_CaptureFromCamera.StopCapture();
-                IsRecording = false;
-                m_AnalyticsService.FinishRecording(Timer);
-                UnsubscribeTimer();
-                m_View?.Hide();
-                OnRecordingStopped?.Invoke();
+                try
+                {
+                    m_CaptureFromCamera.StopCapture();
+                }
+                catch (Exception e)
+                {
+                    // AVPro already flagged itself as not capturing; don't let its file handling
+                    // failure keep our side (and the sidebar button) in the recording state.
+                    Debug.LogException(e);
+                }
             }
+
+            PlayStopCaptureSound();
+            IsRecording = false;
+            m_AnalyticsService.FinishRecording(Timer);
+            UnsubscribeTimer();
+            m_View?.Hide();
+            OnRecordingStopped?.Invoke();
         }
 
         private float Timer => Time.timeSinceLevelLoad - m_RecordStartTime;
@@ -243,15 +258,23 @@ namespace Matterless.Floorcraft
             RenderPipelineManager.endCameraRendering -= OnPostRenderCallback;
         }
 
-        private void StartCapture()
+        private bool StartCapture()
         {
+            // StartCapture also returns false when AVPro queues the start for its next Update
+            // (component not started yet), which still ends up recording.
+            if (!m_CaptureFromCamera.StartCapture() && !m_CaptureFromCamera.IsStartCaptureQueued())
+            {
+                Debug.LogWarning("[RecordingService] AVPro failed to start the capture; recording cancelled.");
+                return false;
+            }
+
             PlayStartCaptureSound();
             m_RecordStartTime = Time.timeSinceLevelLoad;
-            m_CaptureFromCamera.StartCapture();
             IsRecording = true;
             m_View?.Show();
             SubscribeTimer();
             OnRecordingStarted?.Invoke();
+            return true;
         }
 
         private void SubscribeTimer()
@@ -279,6 +302,15 @@ namespace Matterless.Floorcraft
             // Auto-stop when max duration reached
             if (timePassed >= maxTime && IsRecording)
             {
+                StopRecording();
+                return;
+            }
+
+            // AVPro dropped the capture without us asking (native error, disk space, its own stop mode):
+            // wind down our side too instead of leaving the sidebar stuck in the recording state.
+            if (IsRecording && !m_CaptureFromCamera.IsCapturing() && !m_CaptureFromCamera.IsStartCaptureQueued())
+            {
+                Debug.LogWarning($"[RecordingService] AVPro stopped capturing on its own after {timePassed:0.0}s; finishing recording.");
                 StopRecording();
             }
         }
