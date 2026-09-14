@@ -33,6 +33,18 @@ namespace Matterless.Floorcraft
         private float m_RecordStartTime;
         private GameObject m_ServiceGameObject;
 
+#if UNITY_ANDROID && !UNITY_EDITOR
+        // Android: write into the public DCIM/<outputFolder> folder and let AVPro register the file with the media
+        // gallery, so recordings show up in the Gallery and in other apps' pickers. The app-private persistent data
+        // path has been hidden from other apps since Android 11, and WhatsApp's import of a recording handed over by
+        // share intent from there came out as black video (QA, 2026-09-14); the same file sent from the gallery was fine.
+        private const CaptureBase.OutputPath k_DefaultOutputPath = CaptureBase.OutputPath.RelativeToVideos;
+        private const string k_WriteExternalStorage = "android.permission.WRITE_EXTERNAL_STORAGE";
+#else
+        // iOS keeps the persistent data path: its share sheet offers "Save Video" itself.
+        private const CaptureBase.OutputPath k_DefaultOutputPath = CaptureBase.OutputPath.RelativeToPersistentData;
+#endif
+
         // IRecordingService implementation
         public bool IsRecording { get; private set; }
         public Action OnRecordingStarted { get; set; }
@@ -117,14 +129,46 @@ namespace Matterless.Floorcraft
             if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
             {
                 var callbacks = new PermissionCallbacks();
-                callbacks.PermissionGranted += _ => BeginRecording();
+                callbacks.PermissionGranted += _ => StartRecording();
                 callbacks.PermissionDenied += _ => Debug.LogWarning("[RecordingService] Microphone permission denied; recording cancelled.");
                 Permission.RequestUserPermission(Permission.Microphone, callbacks);
+                return;
+            }
+
+            // Writing into DCIM needs the storage permission on Android 10 and below (AVPro's own photo-library check
+            // does the same; from Android 11 the media folders need none). If it is refused, fall back to the private
+            // folder so recording keeps working; the file then just does not appear in the Gallery.
+            if (m_CaptureFromCamera.OutputFolder == CaptureBase.OutputPath.RelativeToVideos
+                && NeedsStoragePermission()
+                && !Permission.HasUserAuthorizedPermission(k_WriteExternalStorage))
+            {
+                var callbacks = new PermissionCallbacks();
+                callbacks.PermissionGranted += _ => StartRecording();
+                callbacks.PermissionDenied += _ => RecordToPrivateStorage();
+                callbacks.PermissionDeniedAndDontAskAgain += _ => RecordToPrivateStorage();
+                Permission.RequestUserPermission(k_WriteExternalStorage, callbacks);
                 return;
             }
 #endif
             BeginRecording();
         }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        private static bool NeedsStoragePermission()
+        {
+            using (var version = new AndroidJavaClass("android.os.Build$VERSION"))
+            {
+                return version.GetStatic<int>("SDK_INT") <= 29;
+            }
+        }
+
+        private void RecordToPrivateStorage()
+        {
+            Debug.LogWarning("[RecordingService] Storage permission denied; recording to the app's private folder instead of the gallery.");
+            m_CaptureFromCamera.OutputFolder = CaptureBase.OutputPath.RelativeToPersistentData;
+            BeginRecording();
+        }
+#endif
 
         private void BeginRecording()
         {
@@ -199,7 +243,7 @@ namespace Matterless.Floorcraft
             m_CaptureFromCamera.StopMode = StopMode.SecondsElapsed;
             m_CaptureFromCamera.StopAfterSecondsElapsed = m_Settings.maxDuration;
             m_CaptureFromCamera.OutputTarget = OutputTarget.VideoFile;
-            m_CaptureFromCamera.OutputFolder = CaptureBase.OutputPath.RelativeToPersistentData;
+            m_CaptureFromCamera.OutputFolder = k_DefaultOutputPath;
             m_CaptureFromCamera.OutputFolderPath = m_Settings.outputFolder;
             m_CaptureFromCamera.FilenamePrefix = "MatterlessCapture";
             m_CaptureFromCamera.FileNameComponents = CaptureBase.FilenameComponents.Date | CaptureBase.FilenameComponents.Time;
@@ -339,6 +383,8 @@ namespace Matterless.Floorcraft
             }
         }
 
+        // Clears the app-private capture folder (screenshots, and recordings on platforms that still write there).
+        // Gallery recordings on Android live in DCIM and are the user's own files, so they are never touched.
         private void RemoveRecords()
         {
             var outputPath = Path.Combine(Application.persistentDataPath, m_Settings.outputFolder);
