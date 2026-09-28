@@ -116,6 +116,9 @@ namespace Matterless.Floorcraft.Editor
         {
             BuildReport buildReport = null;
 
+            // Taken before SetAppEditorSettings writes the config's version code, so an Android
+            // build can put the tracked Player Settings back afterwards.
+            var neutral = AndroidIdentity.Capture();
             SetAppEditorSettings(config);
 
             var target = TargetOf(config);
@@ -135,7 +138,6 @@ namespace Matterless.Floorcraft.Editor
                 {
                     // Apply the store identity for the duration of the build only, so the tracked
                     // Player Settings keep their neutral values afterwards.
-                    var neutral = AndroidIdentity.Capture();
                     try
                     {
                         PrepareAndroid(config);
@@ -159,6 +161,8 @@ namespace Matterless.Floorcraft.Editor
             }
             else
             {
+                if (target == BuildTarget.Android)
+                    neutral.Restore();
                 Debug.Log("Build Canceled");
             }
 
@@ -229,13 +233,16 @@ namespace Matterless.Floorcraft.Editor
             private bool m_UseCustomKeystore;
             private string m_KeystoreName;
             private string m_KeyaliasName;
+            private int m_VersionCode;
 
+            /// <summary>Call before SetAppEditorSettings, which writes the config's version code.</summary>
             public static AndroidIdentity Capture() => new AndroidIdentity
             {
                 m_Identifier = PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.Android),
                 m_UseCustomKeystore = PlayerSettings.Android.useCustomKeystore,
                 m_KeystoreName = PlayerSettings.Android.keystoreName,
                 m_KeyaliasName = PlayerSettings.Android.keyaliasName,
+                m_VersionCode = PlayerSettings.Android.bundleVersionCode,
             };
 
             public void Restore()
@@ -250,6 +257,9 @@ namespace Matterless.Floorcraft.Editor
                     PlayerSettings.Android.keystoreName = m_KeystoreName;
                 if (PlayerSettings.Android.keyaliasName != m_KeyaliasName)
                     PlayerSettings.Android.keyaliasName = m_KeyaliasName;
+                // store version codes are Auki-internal; keep them out of ProjectSettings.asset
+                if (PlayerSettings.Android.bundleVersionCode != m_VersionCode)
+                    PlayerSettings.Android.bundleVersionCode = m_VersionCode;
                 AssetDatabase.SaveAssets();
             }
         }

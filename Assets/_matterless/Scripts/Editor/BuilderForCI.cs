@@ -41,8 +41,9 @@ namespace Matterless.Floorcraft.Editor
                 return;
             }
 
-            // tools/play-release.sh passes the next free Play version code. It is saved into the
-            // config so later builds from the Inspector continue from there.
+            // tools/play-release.sh passes the next free Play version code. It applies to this build
+            // only: store version codes are Auki-internal and must not land in the tracked config.
+            int? trackedBuildNumber = null;
             if (customParameters.TryGetValue("buildNumber", out string buildNumberArgument))
             {
                 if (!int.TryParse(buildNumberArgument, out int buildNumber) || buildNumber <= 0)
@@ -52,13 +53,9 @@ namespace Matterless.Floorcraft.Editor
                     return;
                 }
 
-                if (buildConfig.buildNumber != buildNumber)
-                {
-                    Console.WriteLine("Setting build number of " + buildConfigName + " to " + buildNumber + " (was " + buildConfig.buildNumber + ").");
-                    buildConfig.SetBuildNumber(buildNumber);
-                    EditorUtility.SetDirty(buildConfig);
-                    AssetDatabase.SaveAssets();
-                }
+                trackedBuildNumber = buildConfig.buildNumber;
+                buildConfig.SetBuildNumber(buildNumber);
+                Console.WriteLine("Building " + buildConfigName + " with build number " + buildNumber + ".");
             }
 
             // We could also support BuildOptions.Development but that's probably
@@ -67,7 +64,17 @@ namespace Matterless.Floorcraft.Editor
             BuildOptions buildOptions = BuildOptions.None;
 
             // Perform build
-            BuildReport buildReport = BuildConfigurationEditor.Build(buildConfig, buildOptions, false);
+            BuildReport buildReport;
+            try
+            {
+                buildReport = BuildConfigurationEditor.Build(buildConfig, buildOptions, false);
+            }
+            finally
+            {
+                // never marked dirty, so the tracked asset keeps its own number
+                if (trackedBuildNumber.HasValue)
+                    buildConfig.SetBuildNumber(trackedBuildNumber.Value);
+            }
 
             string outputPath = buildReport.summary.outputPath;
             // Read by tools/play-release.sh; Gradle may leave an unchanged bundle's timestamp as it was.
