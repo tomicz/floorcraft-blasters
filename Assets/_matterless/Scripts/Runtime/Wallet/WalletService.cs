@@ -139,7 +139,9 @@ namespace Matterless.Floorcraft
                 supportedChains = new[]
                 {
                     ChainConstants.Chains.Base
-                }
+                },
+                // Reown's own usage analytics (pulse.walletconnect.org); not needed and not disclosed
+                enableAnalytics = false
             };
 
             await AppKit.InitializeAsync(config);
