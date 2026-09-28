@@ -46,6 +46,7 @@ namespace Matterless.Floorcraft.Editor
         public string[] defines => m_Defines;
 
         public void IncreaseBuildNumber() => m_BuildNumber++;
+        public void SetBuildNumber(int buildNumber) => m_BuildNumber = buildNumber;
         
         
 #if UNITY_EDITOR
