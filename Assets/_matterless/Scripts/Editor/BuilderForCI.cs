@@ -41,6 +41,26 @@ namespace Matterless.Floorcraft.Editor
                 return;
             }
 
+            // tools/play-release.sh passes the next free Play version code. It is saved into the
+            // config so later builds from the Inspector continue from there.
+            if (customParameters.TryGetValue("buildNumber", out string buildNumberArgument))
+            {
+                if (!int.TryParse(buildNumberArgument, out int buildNumber) || buildNumber <= 0)
+                {
+                    Console.WriteLine("Failed to build for CI: -buildNumber must be a positive integer, got '" + buildNumberArgument + "'.");
+                    ExitWithResult(BuildResult.Failed);
+                    return;
+                }
+
+                if (buildConfig.buildNumber != buildNumber)
+                {
+                    Console.WriteLine("Setting build number of " + buildConfigName + " to " + buildNumber + " (was " + buildConfig.buildNumber + ").");
+                    buildConfig.SetBuildNumber(buildNumber);
+                    EditorUtility.SetDirty(buildConfig);
+                    AssetDatabase.SaveAssets();
+                }
+            }
+
             // We could also support BuildOptions.Development but that's probably
             // not needed by CI since we won't debug and attach breakpoints etc there.
             // Dev builds will still use the define MATTERLESS_DEVELOP etc.
@@ -50,6 +70,8 @@ namespace Matterless.Floorcraft.Editor
             BuildReport buildReport = BuildConfigurationEditor.Build(buildConfig, buildOptions, false);
 
             string outputPath = buildReport.summary.outputPath;
+            // Read by tools/play-release.sh; Gradle may leave an unchanged bundle's timestamp as it was.
+            Console.WriteLine("Build output: " + outputPath);
             bool isFolder = Directory.Exists(outputPath);   // Xcode project
             bool isFile = File.Exists(outputPath);          // Android .aab / .apk
             if (isFolder || isFile)
