@@ -9,16 +9,22 @@ namespace Matterless.Floorcraft
     {
         private const string BACKTRACE_CLIENT_RESOURCES_PATH = "BacktraceClient";
 
-        private readonly BacktraceClient m_BacktraceClient;
+        private BacktraceClient m_BacktraceClient;
         private bool m_ErrorOccured = false;
-        
+
         // constructor
-        public BacktraceService()
+        public BacktraceService(PrivacyConsent privacyConsent)
         {
             // Skip all reports in unity editor
-            if (Application.isEditor) 
+            if (Application.isEditor)
                 return;
-            
+
+            // crash reports carry a device identifier, so start only once the privacy policy is accepted
+            privacyConsent.WhenGranted(StartClient);
+        }
+
+        private void StartClient()
+        {
             // instantiate backtrace client from resources
             m_BacktraceClient =
                 GameObject.Instantiate(Resources.Load<BacktraceClient>(BACKTRACE_CLIENT_RESOURCES_PATH));

@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Recordings go to DCIM (RecordingService). Android 10 and below need this to write there; Android 11+ needs nothing, hence maxSdkVersion. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+    <!-- Declared so the manifest merger does not imply it from WRITE_EXTERNAL_STORAGE without a maxSdkVersion. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
     
     <!-- AR Features -->
     <uses-feature android:name="android.hardware.camera.ar" android:required="true" />
