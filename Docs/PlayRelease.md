@@ -4,8 +4,9 @@
 in one command:
 
 1. asks Play for the next free version code
-2. builds `BC_Floorcraft_Blasters_Android` in Unity batchmode with that build number
-   (and saves the number into the config asset)
+2. builds `BC_Floorcraft_Blasters_Android` in Unity batchmode with that build number.
+   The number is used for this build only: store version codes stay out of the tracked
+   config and Player Settings
 3. checks that the bundle is signed with the `.env` release key and that the native
    debug symbols zip was written
 4. uploads the bundle and the symbols with `tools/play-upload.py` and adds a release to
