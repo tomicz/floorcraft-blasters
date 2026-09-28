@@ -125,6 +125,25 @@ fi
 
 SYMBOLS="$(find "$ROOT/Builds" -maxdepth 1 -name "$(basename "$AAB" .aab)-*-v$BUILD_NUMBER-*.symbols.zip" | head -n 1)"
 [ -n "$SYMBOLS" ] || die "no native debug symbols zip for version code $BUILD_NUMBER next to the bundle"
+
+# Unity keeps an unchanged symbols zip from an earlier build, so match it by ELF build ID, not by name.
+READELF="$(ls "$(dirname "$UNITY")"/../../../PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/*/bin/llvm-readelf 2>/dev/null | head -n 1)"
+if [ -n "$READELF" ]; then
+    CHECK_DIR="$ROOT/Logs/play-release-symbols-check"
+    rm -rf "$CHECK_DIR"; mkdir -p "$CHECK_DIR"
+    unzip -q "$AAB" 'base/lib/*/libil2cpp.so' -d "$CHECK_DIR/bundle"
+    unzip -q "$SYMBOLS" '*/libil2cpp.so' -d "$CHECK_DIR/symbols"
+    for LIB in "$CHECK_DIR"/bundle/base/lib/*/libil2cpp.so; do
+        ABI="$(basename "$(dirname "$LIB")")"
+        BUNDLE_ID="$("$READELF" -n "$LIB" | awk '/Build ID/ {print $3}')"
+        SYMBOLS_ID="$("$READELF" -n "$CHECK_DIR/symbols/$ABI/libil2cpp.so" 2>/dev/null | awk '/Build ID/ {print $3}')"
+        [ -n "$BUNDLE_ID" ] && [ "$BUNDLE_ID" = "$SYMBOLS_ID" ] \
+            || die "${SYMBOLS#$ROOT/} does not match the $ABI libil2cpp.so in the bundle"
+    done
+    rm -rf "$CHECK_DIR"; mkdir -p "$CHECK_DIR"
+else
+    log "warning: llvm-readelf not found in the Unity NDK, so the symbols were matched by file name only"
+fi
 log "native debug symbols ${SYMBOLS#$ROOT/}"
 
 if [ $SKIP_UPLOAD -eq 1 ]; then
