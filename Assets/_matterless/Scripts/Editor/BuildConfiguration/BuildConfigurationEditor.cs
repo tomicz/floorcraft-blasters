@@ -166,13 +166,19 @@ namespace Matterless.Floorcraft.Editor
         }
 
         /// <summary>
-        /// Android specifics: app bundle toggle, package name and release signing from .env.
+        /// Android specifics: app bundle toggle, native symbols, package name and release signing from .env.
         /// Keystore passwords may also be typed into Player Settings for the editor session.
         /// Configs with debug signing enabled skip the keystore entirely.
         /// </summary>
         private static void PrepareAndroid(BuildConfiguration config)
         {
             EditorUserBuildSettings.buildAppBundle = config.androidAppBundle;
+
+            // Store builds write a .symbols.zip next to the bundle; upload it with the release so
+            // Play can symbolicate native crashes and ANRs. Debug-signed test builds skip it.
+            EditorUserBuildSettings.androidCreateSymbols = config.androidDebugSigning
+                ? AndroidCreateSymbols.Disabled
+                : AndroidCreateSymbols.Public;
 
             if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
                 Debug.LogWarning("[Build] Active platform is not Android; Unity switches platform as part of this build, which takes a while.");
